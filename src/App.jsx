@@ -67,7 +67,8 @@ function extractJSON(text) {
 function fetchAI(body) {
   var controller = new AbortController();
   var id = setTimeout(function() { controller.abort(); }, 120000);
-  return fetch("http://localhost:3001/api/ai", {
+  var apiBase = window.location.hostname === "localhost" ? "http://localhost:3001" : "";
+  return fetch(apiBase + "/api/ai", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -1598,7 +1599,7 @@ export default function App() {
 
   // Sync materiais: carrega do servidor, fallback localStorage
   useEffect(function() {
-    fetch("http://localhost:3001/api/materials")
+    fetch((window.location.hostname === "localhost" ? "http://localhost:3001" : "") + "/api/materials")
       .then(function(r) { return r.json(); })
       .then(function(serverMats) {
         // Merge: servidor é fonte principal, localStorage é cache
@@ -1609,7 +1610,7 @@ export default function App() {
         var onlyLocal = localMats.filter(function(m) { return !serverIds.includes(String(m.id)); });
         // Salva materiais só-locais no servidor
         onlyLocal.forEach(function(m) {
-          fetch("http://localhost:3001/api/materials", {
+          fetch((window.location.hostname === "localhost" ? "http://localhost:3001" : "") + "/api/materials", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify(m)
           }).catch(function() {});
@@ -1637,7 +1638,7 @@ export default function App() {
     var m = { id: Date.now(), title: matTitle.trim(), content: matContent.trim(), date: new Date().toLocaleDateString("pt-BR") };
     saveMaterials([m].concat(materials));
     // Salva no servidor
-    fetch("http://localhost:3001/api/materials", {
+    fetch((window.location.hostname === "localhost" ? "http://localhost:3001" : "") + "/api/materials", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(m)
     }).catch(function() {});
