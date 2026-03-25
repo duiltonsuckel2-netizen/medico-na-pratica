@@ -2419,6 +2419,52 @@ export default function App() {
               </div>;
             })}
           </div>
+
+          {/* Exportar / Importar dados */}
+          <div style={{ marginTop: 28, padding: "16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#555", marginBottom: 12, letterSpacing: "0.05em" }}>SINCRONIZAR DADOS</div>
+            <p style={{ fontSize: 12, color: "#444", marginBottom: 12 }}>Transfira seus dados entre o app local e o app online.</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={function() {
+                var data = {};
+                [STORAGE_KEY, NAME_KEY, MATERIALS_KEY, FLASHCARDS_KEY, FEEDBACK_KEY].forEach(function(k) {
+                  try { var v = localStorage.getItem(k); if (v) data[k] = v; } catch(e) {}
+                });
+                var json = JSON.stringify(data);
+                var blob = new Blob([json], { type: "application/json" });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                a.href = url;
+                a.download = "medico-pratica-backup.json";
+                a.click();
+                URL.revokeObjectURL(url);
+              }} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "rgba(76,201,240,0.12)", color: "#4CC9F0", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Exportar dados</button>
+              <button onClick={function() {
+                var input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".json";
+                input.onchange = function(e) {
+                  var file = e.target.files[0];
+                  if (!file) return;
+                  var reader = new FileReader();
+                  reader.onload = function(ev) {
+                    try {
+                      var data = JSON.parse(ev.target.result);
+                      Object.keys(data).forEach(function(k) {
+                        localStorage.setItem(k, data[k]);
+                      });
+                      alert("Dados importados com sucesso! O app vai recarregar.");
+                      window.location.reload();
+                    } catch(err) {
+                      alert("Erro ao importar: " + err.message);
+                    }
+                  };
+                  reader.readAsText(file);
+                };
+                input.click();
+              }} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "rgba(224,64,251,0.12)", color: "#E040FB", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Importar dados</button>
+            </div>
+          </div>
         </div>}
 
         {/* ─── MATERIAL TAB ─── */}
