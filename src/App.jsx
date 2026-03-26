@@ -1373,14 +1373,25 @@ export default function App() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0A0C10", fontFamily: "'Outfit', sans-serif", color: "#D0D8E8", zoom: zoom }}>
+    <div style={{ minHeight: "100vh", background: "#0A0C10", fontFamily: "'Outfit', sans-serif", color: "#D0D8E8", zoom: window.innerWidth <= 768 ? 1 : zoom }}>
       <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,700;1,400;1,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <style>{
         "@keyframes spin { to { transform: rotate(360deg) } }" +
         "@keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }" +
         "* { box-sizing: border-box }" +
         "::-webkit-scrollbar { width: 4px } ::-webkit-scrollbar-track { background: transparent } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px }" +
-        "textarea:focus { border-color: rgba(255,255,255,0.15) !important; box-shadow: 0 0 0 3px rgba(76,201,240,0.08) }"
+        "textarea:focus { border-color: rgba(255,255,255,0.15) !important; box-shadow: 0 0 0 3px rgba(76,201,240,0.08) }" +
+        "@media (max-width: 768px) {" +
+          ".app-header-row { flex-wrap: wrap !important; height: auto !important; padding: 10px 0 !important; gap: 8px !important; }" +
+          ".app-nav { overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; width: 100% !important; order: 3 !important; }" +
+          ".app-nav::-webkit-scrollbar { display: none }" +
+          ".app-nav button { white-space: nowrap !important; flex-shrink: 0 !important; font-size: 11px !important; padding: 6px 10px !important; }" +
+          ".app-zoom-controls { display: none !important; }" +
+          ".app-content { padding: 16px 12px 80px !important; }" +
+          ".app-stats-row { flex-direction: column !important; }" +
+          ".app-fc-buttons { grid-template-columns: 1fr 1fr !important; }" +
+          ".app-activity-grid { grid-template-columns: repeat(2, 1fr) !important; }" +
+        "}"
       }</style>
 
       {/* Pomodoro Timer Modal */}
@@ -1439,24 +1450,24 @@ export default function App() {
 
 
       {/* Header */}
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0 24px", background: "rgba(10,12,16,0.9)", backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 860, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img src="/icon.svg" alt="icon" style={{ width: 44, height: 44, borderRadius: 12 }} />
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0 16px", background: "rgba(10,12,16,0.9)", backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100 }}>
+        <div className="app-header-row" style={{ maxWidth: 860, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src="/icon.svg" alt="icon" style={{ width: 36, height: 36, borderRadius: 10 }} />
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#F0F2F5", lineHeight: 1, fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Pronto Atendimento Suckel</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#F0F2F5", lineHeight: 1, fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Pronto Atendimento Suckel</div>
               {userName && <div style={{ fontSize: 11, color: "#555", marginTop: 2, fontWeight: 500 }}>Olá, {userName} 👋</div>}
             </div>
+            <button onClick={function() { setNameInput(userName); setShowNameModal(true); }} title="Editar perfil" style={{ width: 28, height: 28, borderRadius: 8, background: userName ? "rgba(76,201,240,0.1)" : "rgba(255,77,109,0.12)", border: "1px solid " + (userName ? "rgba(76,201,240,0.15)" : "rgba(255,77,109,0.2)"), color: userName ? "#4CC9F0" : "#FF4D6D", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>{userName ? "✏️" : "👤"}</button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div className="app-zoom-controls" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <button onClick={function() { changeZoom(-0.05); }} title="Diminuir" style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#888", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
             <span style={{ fontSize: 11, color: "#555", fontWeight: 700, minWidth: 36, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={function() { changeZoom(0.05); }} title="Aumentar" style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#888", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
-            <button onClick={function() { setNameInput(userName); setShowNameModal(true); }} title="Editar perfil" style={{ width: 32, height: 32, borderRadius: 10, background: userName ? "rgba(76,201,240,0.1)" : "rgba(255,77,109,0.12)", border: "1px solid " + (userName ? "rgba(76,201,240,0.15)" : "rgba(255,77,109,0.2)"), color: userName ? "#4CC9F0" : "#FF4D6D", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 4 }}>{userName ? "✏️" : "👤"}</button>
           </div>
-          <nav style={{ display: "flex", gap: 2, background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 3 }}>
+          <nav className="app-nav" style={{ display: "flex", gap: 2, background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 3, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             {navItems.map(function(item) {
-              return <button key={item.key} onClick={function() { setView(item.key); setLessonModule(null); }} style={{ padding: "6px 14px", borderRadius: 9, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", background: view === item.key ? "rgba(255,255,255,0.08)" : "transparent", color: view === item.key ? "#F0F2F5" : "#444" }}>
+              return <button key={item.key} onClick={function() { setView(item.key); setLessonModule(null); }} style={{ padding: "6px 14px", borderRadius: 9, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", background: view === item.key ? "rgba(255,255,255,0.08)" : "transparent", color: view === item.key ? "#F0F2F5" : "#444", whiteSpace: "nowrap", flexShrink: 0 }}>
                 <span style={{ marginRight: 5 }}>{item.icon}</span>{item.label}
               </button>;
             })}
@@ -1475,7 +1486,7 @@ export default function App() {
       </div>
 
       {/* Main Content */}
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "24px 24px 80px", animation: "fadeIn 0.25s ease" }}>
+      <div className="app-content" style={{ maxWidth: 860, margin: "0 auto", padding: "24px 24px 80px", animation: "fadeIn 0.25s ease" }}>
 
         {/* ─── LESSON LIST ─── */}
         {lessonModule && <div style={{ animation: "fadeIn 0.2s ease" }}>
@@ -1577,7 +1588,7 @@ export default function App() {
             </div>
 
             {/* Resumo geral */}
-            <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+            <div className="app-stats-row" style={{ display: "flex", gap: 10, marginBottom: 20 }}>
               <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(6,214,160,0.06)", border: "1px solid rgba(6,214,160,0.12)" }}>
                 <div style={{ fontSize: 10, color: "#06D6A0", fontWeight: 700, marginBottom: 4 }}>ACERTOS</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#06D6A0" }}>{grandAcertos}</div>
@@ -1667,7 +1678,7 @@ export default function App() {
             </div>
 
             {/* Stats */}
-            <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            <div className="app-stats-row" style={{ display: "flex", gap: 12, marginBottom: 20 }}>
               <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(76,201,240,0.06)", border: "1px solid rgba(76,201,240,0.12)" }}>
                 <div style={{ fontSize: 11, color: "#4CC9F0", fontWeight: 700, marginBottom: 4 }}>PARA REVISAR HOJE</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#F0F2F5" }}>{dueCards.length}</div>
@@ -1716,7 +1727,7 @@ export default function App() {
               </div>}
               {fcFlipped && <div style={{ marginTop: 16 }}>
                 <div style={{ fontSize: 11, color: "#444", textAlign: "center", marginBottom: 8 }}>Quão bem você lembrou?</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                <div className="app-fc-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                   <button onClick={function() { handleReview(0); }} style={{ padding: "12px 4px", borderRadius: 12, border: "1px solid rgba(255,77,109,0.25)", background: "rgba(255,77,109,0.08)", color: "#FF4D6D", fontWeight: 700, cursor: "pointer", fontSize: 12, textAlign: "center" }}>
                     <div style={{ fontSize: 11, marginBottom: 4 }}>{getNextIntervalPreview(card, 0)}</div>
                     <div>De novo</div>
