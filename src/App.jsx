@@ -1,4 +1,5 @@
 import { useState, useEffect, useReducer, useCallback } from "react";
+import { LESSON_RESUMOS } from "./lessonResumos.js";
 
 // ════════════════════════════════════════
 // FETCH COM TIMEOUT (90s para Groq API)
@@ -113,7 +114,7 @@ const MODULES = [
       "Emerg HAS Gestacional Pt1","Emerg HAS Gestacional Pt2","Emerg HAS Gestacional Pt3"
     ],
     defaultWatched: [],
-    topics: ["IC Aguda","Arritmias","FA","Bradiarritmias","IAM/SCA","BRE","EAP","HAS Crises","TEP","TVP","OAA","Dissecção Aorta","Emerg. HAS Gestacional"]
+    topics: ["Sist. Cardiocirculatório","IC Aguda","Arritmias","FA","Bradiarritmias","IAM/SCA","BRE","EAP","HAS Crises","TEP","TVP","OAA","Dissecção Aorta","Emerg. HAS Gestacional"]
   },
   {
     id: 3, name: "Infecções Mais Frequentes", weeks: 7,
@@ -224,7 +225,7 @@ const MODULES = [
 const TOTAL_WEEKS = MODULES.reduce(function(s, m) { return s + m.weeks; }, 0);
 const TOTAL_LESSONS = MODULES.reduce(function(s, m) { return s + m.lessons.length; }, 0);
 const DIFF_LABELS = ["Muito Fácil", "Fácil", "Moderado", "Difícil", "Muito Difícil", "Impossível"];
-const DIFF_COLORS = ["#4CC9F0", "#06D6A0", "#F77F00", "#FF4D6D", "#E040FB", "#ff0040"];
+const DIFF_COLORS = ["#4CC9F0", "#06D6A0", "#F77F00", "#FFD60A", "#E040FB", "#ff0040"];
 const DIFF_EMOJI = ["🔵", "🟢", "🟡", "🔴", "💀", "☠️"];
 const DIFF_POINTS = [2, 3, 3, 4, 5, 1]; // pontos pra subir de cada nível
 
@@ -299,48 +300,90 @@ const BLOCK_TYPES = {
 };
 
 const GUIDES = {
-  theory: {
-    t: "📖 Aulas",
-    d: "A aula é o ponto de partida do aprendizado. O objetivo não é só assistir, mas construir uma memória ativa do conteúdo. Estudos mostram que anotar à mão (não digitar) aumenta significativamente a retenção, porque força seu cérebro a processar e resumir — e não apenas copiar.",
+  welcome: {
+    t: "🚀 Primeiros Passos",
+    d: "Bem-vindo ao Pronto Atendimento Suckel! Este app foi feito para você estudar medicina de emergência de forma inteligente. Aqui está o fluxo completo de como usar.",
     tips: [
-      "Assista na velocidade 1x ou no máximo 1.25x — velocidades maiores prejudicam a compreensão em conteúdos técnicos como medicina",
-      "Pause o vídeo sempre que surgir um conceito novo ou uma dúvida. Não deixe acumular — resolva na hora buscando no material ou anotando para perguntar depois",
-      "Após cada aula, feche o caderno e tente explicar o conteúdo em voz alta como se fosse para um paciente leigo. Essa técnica (Feynman) revela exatamente o que você não entendeu de verdade",
-      "Limite seus destaques a no máximo 3 pontos por aula. Sublinhar tudo é o mesmo que não sublinhar nada — seu cérebro para de filtrar o que é importante",
-      "Anote suas dúvidas em um caderno separado ou no celular. Revise essa lista semanalmente e pesquise ativamente cada uma delas"
+      "1. Vá na aba Módulos e escolha o módulo que quer estudar",
+      "2. Assista as aulas do curso e marque cada tema como concluído clicando no checkbox",
+      "3. Clique no nome do tema para expandir o resumo completo da aula — use para revisar",
+      "4. Vá na aba Atividades e escolha uma atividade (Questões, Caso Clínico, etc.)",
+      "5. O app gera um prompt personalizado com seus temas e nível. Copie e cole em uma IA",
+      "6. Pratique com a IA. Ao terminar, digite 'finalizei' e ele gera um relatório",
+      "7. Cole o relatório de volta no app para atualizar seu progresso automaticamente",
+      "8. Revise seus flashcards diariamente na aba Flashcards"
     ]
   },
-  review: {
+  modules: {
+    t: "📋 Módulos e Resumos",
+    d: "A aba Módulos é onde você acompanha seu progresso nas aulas. Cada módulo tem vários temas, e cada tema tem um resumo completo que você pode consultar a qualquer momento.",
+    tips: [
+      "Marque os temas conforme for assistindo as aulas do curso — clique no checkbox à esquerda",
+      "Clique no nome do tema para expandir o resumo. O resumo contém todas as informações da aula: definições, protocolos, doses, classificações",
+      "Os temas marcados são usados para gerar as atividades. Quanto mais temas marcar, mais variadas serão suas questões",
+      "Você pode desmarcar um tema a qualquer momento se quiser refazer",
+      "A barra de progresso mostra quantos temas você já concluiu em cada módulo"
+    ]
+  },
+  activities: {
+    t: "🩺 Atividades com IA",
+    d: "A aba Atividades é o coração do app. Aqui você gera prompts personalizados para praticar com uma IA. O prompt já vem com seus temas, nível de dificuldade e resumos das aulas.",
+    tips: [
+      "Escolha uma atividade: Questões (múltipla escolha adaptativa), Caso Clínico (raciocínio diagnóstico) ou Investigação Clínica (interrogar e examinar)",
+      "Clique na seta para gerar o prompt. Depois clique em 'Copiar' para copiar o texto",
+      "Abra uma IA (como Claude, ChatGPT, etc.) e cole o prompt. A IA vai começar a atividade imediatamente",
+      "Quando terminar a sessão, digite 'finalizei' para a IA. Ele vai gerar um bloco de código com seus resultados",
+      "Volte ao app, cole o relatório na caixa 'Importar relatório' e clique em Importar. Seus níveis, erros e flashcards serão atualizados automaticamente",
+      "O sistema adapta a dificuldade por tema: acertos sobem o nível, erros voltam para reforço"
+    ]
+  },
+  flashcards: {
     t: "🃏 Flashcards",
-    d: "Os flashcards com repetição espaçada são a técnica de memorização mais validada pela ciência. O app cria flashcards automaticamente dos temas que você erra e agenda revisões em intervalos crescentes (1, 3, 7, 14, 30 dias). Revise na aba Flashcards — quanto mais consistente, mais forte a memória.",
+    d: "Os flashcards usam o algoritmo SM-2 (mesmo do Anki). Cada card tem um fator de facilidade que se adapta às suas respostas. Cards que você domina aparecem cada vez menos; cards difíceis voltam com frequência.",
     tips: [
-      "Revise os flashcards pendentes todos os dias — leva poucos minutos e o impacto na retenção é enorme",
-      "Ao revisar, tente lembrar a resposta ANTES de virar o card. Só olhar a resposta sem tentar não ativa a memória",
-      "Se marcou 'Não lembrei', o card volta amanhã. Se marcou 'Lembrei', o intervalo aumenta. Confie no sistema",
-      "Os flashcards são gerados a partir dos seus erros nas atividades com o Claude. Quanto mais praticar, mais cards úteis terá",
-      "Reserve os primeiros 15 minutos de cada sessão de estudo para revisar flashcards — antes de começar algo novo"
+      "Revise todos os dias — poucos minutos de revisão consistente vencem horas de estudo espaçado",
+      "Tente lembrar ANTES de virar o card. Sem esforço de recuperação, não há memorização",
+      "De novo — Não lembrei nada. O card volta imediatamente pra fila de aprendizado",
+      "Difícil — Lembrei com muito esforço. O intervalo cresce devagar (×1.2) e a facilidade diminui",
+      "Bom — Lembrei após pensar um pouco. O intervalo cresce normalmente (× facilidade)",
+      "Fácil — Lembrei instantaneamente. O intervalo cresce rápido (× facilidade × 1.3) e a facilidade aumenta",
+      "Cards novos passam por etapas de aprendizado (1min → 10min) antes de graduar com intervalo de 1 dia",
+      "Se errar um card já graduado, ele volta pras etapas de aprendizado e o intervalo é reduzido pela metade",
+      "Os flashcards são gerados automaticamente dos seus erros ao importar o relatório da IA na aba Atividades"
     ]
   },
-  practice: {
-    t: "🩺 Questões",
-    d: "Na aba Atividades, você gera um prompt e cola no Claude para praticar questões adaptativas. O Claude faz questões no seu nível, explica cada alternativa, e no final gera um relatório que atualiza seu progresso no app automaticamente.",
+  levels: {
+    t: "📊 Estatísticas",
+    d: "A aba Estatísticas mostra seus acertos e erros por tema. Use para identificar pontos fracos e direcionar seus estudos.",
     tips: [
-      "O sistema adapta a dificuldade por tema: acertos sobem o nível, erros voltam para reforço",
-      "Quando errar, não apenas leia a explicação — escreva com suas próprias palavras por que errou. Isso ativa a memória de forma muito mais profunda",
-      "Após terminar, digite 'finalizei' no Claude e importe o relatório na aba Atividades para atualizar seu progresso",
-      "Faça pelo menos uma sessão de questões após cada aula, ainda que curta (10–15 min). O impacto na retenção é muito maior do que estudar por horas sem praticar",
-      "Varie entre Questões, Caso Clínico e Investigação Clínica — cada formato treina um aspecto diferente do raciocínio médico"
+      "Cada tema mostra: total de acertos, total de erros e percentual de acerto",
+      "Verde (≥70%) = tema dominado. Amarelo (≥50%) = precisa reforço. Vermelho (<50%) = ponto fraco",
+      "Os dados são atualizados a cada relatório importado na aba Atividades",
+      "Use as estatísticas para decidir quais temas revisar: foque nos vermelhos e amarelos",
+      "O badge de nível ao lado de cada tema mostra seu nível atual naquele assunto",
+      "Você pode limpar as estatísticas a qualquer momento para recomeçar do zero"
     ]
   },
-  consolidation: {
-    t: "🧠 Mapa Mental / Resumo",
-    d: "Mapas mentais e resumos forçam você a organizar o que aprendeu de forma estruturada. Quando consegue montar um mapa mental completo de um tema sem consultar nada, significa que realmente dominou o conteúdo. É diferente de decorar — é compreender a lógica por trás.",
+  schedule: {
+    t: "📅 Semana e Trilha",
+    d: "A aba Semana organiza seu estudo por dia com blocos de teoria, prática e revisão. A aba Trilha mostra os temas essenciais priorizados por gravidade — do que mata em minutos ao que é frequente na UPA.",
     tips: [
-      "Use Xmind (gratuito), Canva ou papel e caneta colorida. O importante é ser visual e hierárquico",
-      "Estruture sempre igual: centro = diagnóstico/tema, ramos = fisiopatologia, clínica, exames, tratamento e complicações",
-      "Use cores diferentes para cada ramo. Cores criam âncoras visuais e tornam a memorização mais eficiente",
-      "Depois de montar, compare com o material do curso. As diferenças revelam pontos cegos",
-      "Guarde todos os mapas em uma pasta. Antes de provas ou plantões, uma revisão rápida dos mapas ativa memórias muito mais rápido do que reler textos longos"
+      "Na aba Semana, siga o cronograma sugerido. Marque cada bloco conforme for completando",
+      "A Trilha mostra a ordem ideal de estudo: primeiro o que mata rápido (PCR, IOT), depois o que mata em horas (IAM, sepse), por fim o frequente (asma, dengue)",
+      "Não precisa seguir a ordem rigidamente — mas priorize os temas vermelhos (mata em minutos) se está começando",
+      "Use o mapa mental ou resumo após cada bloco de aula para consolidar"
+    ]
+  },
+  tips: {
+    t: "🧠 Dicas de Estudo",
+    d: "Técnicas comprovadas para maximizar seu aprendizado em medicina de emergência.",
+    tips: [
+      "Assista as aulas na velocidade 1x ou 1.25x — velocidades maiores prejudicam a compreensão em conteúdos técnicos",
+      "Após cada aula, feche o caderno e explique o conteúdo em voz alta como se fosse para um paciente leigo (Técnica Feynman)",
+      "Faça pelo menos uma sessão de questões após cada aula, ainda que curta (10-15 min). O impacto na retenção é enorme",
+      "Varie entre Questões, Caso Clínico e Investigação — cada formato treina um aspecto diferente do raciocínio médico",
+      "Monte mapas mentais: centro = tema, ramos = fisiopatologia, clínica, exames, tratamento e complicações",
+      "Antes de provas ou plantões, revise os mapas mentais e flashcards — muito mais eficiente do que reler textos"
     ]
   },
 };
@@ -373,7 +416,98 @@ function getModuleForWeek(w) {
   return MODULES[MODULES.length - 1];
 }
 
+// Mapeamento explícito: lesson → topic
+var LESSON_TOPIC_MAP = {
+  // Módulo 1
+  "PCR com e sem ritmo chocável": "PCR", "Dúvidas sobre PCR": "PCR",
+  "PCR na rua – Suporte Básico de Vida": "Suporte Básico de Vida", "Dúvidas sobre PCR na rua": "Suporte Básico de Vida",
+  "Cuidados pós PCR": "Cuidados pós-PCR", "Caso clínico pós PCR": "Cuidados pós-PCR",
+  "Taquiarritmias": "Taquiarritmias", "Caso clínico Taquiarritmias": "Taquiarritmias",
+  "Bradiarritmias": "Bradiarritmias",
+  // Módulo 2
+  "Sist. Cardiocirculatório Pt1": "Sist. Cardiocirculatório", "Sist. Cardiocirculatório Pt2": "Sist. Cardiocirculatório", "Sist. Cardiocirculatório Pt3": "Sist. Cardiocirculatório",
+  "IC Aguda Pt1": "IC Aguda", "IC Aguda Pt2": "IC Aguda", "IC Aguda Pt3": "IC Aguda",
+  "Taquiarritmias Pt1": "Arritmias", "Taquiarritmias Pt2": "Arritmias", "Taquiarritmias Pt3": "Arritmias",
+  "FA (2025) Pt1": "FA", "FA Pt2": "FA", "FA Pt3": "FA",
+  "Bradiarritmias Pt1": "Bradiarritmias", "Bradiarritmias Pt2": "Bradiarritmias", "Bradiarritmias Pt3": "Bradiarritmias",
+  "IAM Supra ST Pt1": "IAM/SCA", "IAM Supra ST Pt2": "IAM/SCA", "IAM Supra ST Pt3": "IAM/SCA",
+  "SCA Pt1": "IAM/SCA", "SCA Pt2": "IAM/SCA", "SCA Pt3": "IAM/SCA", "Infarto VD": "IAM/SCA",
+  "BRE Pt1": "BRE", "BRE Pt2": "BRE", "BRE Pt3": "BRE",
+  "EAP Pt1": "EAP", "EAP Pt2": "EAP", "EAP Pt3": "EAP",
+  "HAS Crises Pt1": "HAS Crises", "HAS Crises Pt2": "HAS Crises", "HAS Crises Pt3": "HAS Crises",
+  "TEP Pt1": "TEP", "TEP Pt2": "TEP", "TEP Pt3": "TEP",
+  "TVP Fisiopato": "TVP", "TVP Tratamento": "TVP", "TVP Caso": "TVP", "TVP Dúvidas": "TVP",
+  "OAA Pt1": "OAA", "OAA Pt2": "OAA", "OAA Pt3": "OAA",
+  "Dissecção Aorta Pt1": "Dissecção Aorta", "Dissecção Aorta Pt2": "Dissecção Aorta", "Dissecção Aorta Pt3": "Dissecção Aorta", "Dissecção Caso": "Dissecção Aorta",
+  "Emerg HAS Gestacional Pt1": "Emerg. HAS Gestacional", "Emerg HAS Gestacional Pt2": "Emerg. HAS Gestacional", "Emerg HAS Gestacional Pt3": "Emerg. HAS Gestacional",
+  // Módulo 3
+  "IVAS Gripes Pt1": "IVAS", "IVAS Gripes Pt2": "IVAS", "IVAS Gripes Pt3": "IVAS", "IVAS Faringite/Otite": "IVAS",
+  "IVAS RSA Pt1": "IVAS", "IVAS RSA Pt2": "IVAS", "IVAS RSA Pt3": "IVAS",
+  "IVAS Faringite Pt1": "IVAS", "IVAS Faringite Pt2": "IVAS", "IVAS Faringite Pt3": "IVAS", "Retirada inseto": "IVAS",
+  "PAC Pt1": "PAC", "PAC Pt2": "PAC", "PAC Pt3": "PAC",
+  "Inf. Cutâneas Visão geral": "Inf. Cutâneas", "Impetigo": "Inf. Cutâneas", "Foliculite": "Inf. Cutâneas", "Furúnculo": "Inf. Cutâneas",
+  "Erisipela x Celulite": "Inf. Cutâneas", "Fasciíte Necrosante": "Inf. Cutâneas", "Inf. Cutâneas Caso": "Inf. Cutâneas",
+  "ITU Pt1": "ITU", "ITU Pt2": "ITU", "ITU Pt3": "ITU", "Sondagem Vesical": "ITU",
+  "GECA Pt1": "GECA", "GECA Pt2": "GECA", "GECA Pt3": "GECA",
+  "Sepse Pt1": "Sepse", "Sepse Pt2": "Sepse", "Sepse Pt3": "Sepse",
+  "Dengue Pt1": "Dengue/Chik/Zika", "Dengue Pt2": "Dengue/Chik/Zika", "Dengue Pt3": "Dengue/Chik/Zika", "Chikungunya": "Dengue/Chik/Zika", "Zika": "Dengue/Chik/Zika",
+  "Meningites Pt1": "Meningites", "Meningites Pt2": "Meningites", "Meningites Pt3": "Meningites",
+  "DIP Pt1": "DIP", "DIP Pt2": "DIP", "DIP Pt3": "DIP", "Resumo Infecções": "DIP",
+  "Síndrome Febril Pt1": "Síndrome Febril", "Síndrome Febril Pt2": "Síndrome Febril", "Síndrome Febril Pt3": "Síndrome Febril",
+  "Leptospirose Pt1": "Leptospirose", "Leptospirose Pt2": "Leptospirose",
+  // Módulo 4
+  "IOT Pt1": "IOT", "IOT Pt2": "IOT", "IOT Dúvidas": "IOT",
+  "Gasometria Pt1": "Gasometria", "Gasometria Pt2": "Gasometria", "Gasometria Pt3": "Gasometria",
+  "DPOC Pt1": "DPOC", "DPOC Pt2": "DPOC", "DPOC Pt3": "DPOC",
+  "Asma Pt1": "Asma", "Asma Pt2": "Asma", "Asma Pt3": "Asma",
+  "Insuf. Resp. Pt1": "Insuf. Resp.", "Insuf. Resp. Pt2": "Insuf. Resp.", "Insuf. Resp. Casos": "Insuf. Resp.",
+  "VM Pt1": "VM", "VM Pt2": "VM", "VM Simulador": "VM",
+  "Desmame VM Sedação": "Desmame VM", "Desmame VM TRE": "Desmame VM", "Desmame VM Dúvidas": "Desmame VM", "Desmame VM Simulador": "Desmame VM",
+  // Módulo 5
+  "Politrauma X e A": "Politrauma", "Politrauma BCDE": "Politrauma", "Politrauma Caso": "Politrauma",
+  "Trauma Torácico Pt1": "Trauma Torácico", "Trauma Torácico Pt2": "Trauma Torácico", "Trauma Torácico Casos": "Trauma Torácico", "Trauma Torácico Dúvidas": "Trauma Torácico",
+  "Trauma Abd/Pélvico Pt1": "Trauma Abd/Pélvico", "Trauma Abd/Pélvico Pt2": "Trauma Abd/Pélvico", "Trauma Abd/Pélvico Casos": "Trauma Abd/Pélvico", "Trauma Abd/Pélvico Dúvidas": "Trauma Abd/Pélvico",
+  "Choques Pt1": "Choques", "Choques Pt2": "Choques", "Choques Pt3": "Choques",
+  "TCE Pt1": "TCE", "TCE Pt2": "TCE", "TCE Caso": "TCE", "TCE Dúvidas": "TCE",
+  "TRM Entendendo": "TRM", "TRM Choque neurogênico": "TRM", "TRM Caso": "TRM", "TRM Dúvidas": "TRM",
+  "Afogamento Fisiopato": "Afogamento", "Afogamento Graus": "Afogamento", "Afogamento Caso": "Afogamento", "Afogamento Dúvidas": "Afogamento",
+  "Queimaduras Tipos": "Queimaduras", "Queimaduras Condutas": "Queimaduras", "Queimaduras Caso": "Queimaduras",
+  // Módulo 6
+  "Dor Abdominal Tipos": "Dor Abdominal", "Dor Abdominal Alarme": "Dor Abdominal", "Dor Abdominal Raciocínio": "Dor Abdominal",
+  "Dor Abdominal Casos": "Dor Abdominal", "Dor Abdominal Casos2": "Dor Abdominal", "Dor Abdominal Dúvidas": "Dor Abdominal",
+  "Cólica Nefrítica Pt1": "Cólica Nefrítica", "Cólica Nefrítica Pt2": "Cólica Nefrítica", "Cólica Nefrítica Pt3": "Cólica Nefrítica",
+  "Anafilaxia Pt1": "Anafilaxia", "Anafilaxia Pt2": "Anafilaxia", "Anafilaxia Pt3": "Anafilaxia",
+  "Intox. Exógenas Pt1": "Intox. Exógenas", "Intox. Exógenas Pt2": "Intox. Exógenas", "Intox. Exógenas Pt3": "Intox. Exógenas",
+  "Animais Peçonh. Pt1": "Animais Peçonh.", "Animais Peçonh. Pt2": "Animais Peçonh.", "Animais Peçonh. Casos": "Animais Peçonh.", "Animais Peçonh. Dúvidas": "Animais Peçonh.",
+  "Lombalgias Passo a passo": "Lombalgias", "Lombalgias Medicações": "Lombalgias", "Lombalgias Dúvidas": "Lombalgias",
+  "Vertigens Fisiologia": "Vertigens", "Vertigens Tratamento": "Vertigens", "Vertigens Casos": "Vertigens", "Vertigens Dúvidas": "Vertigens",
+  "Emerg. Psiq. Suicídio": "Emerg. Psiq.", "Emerg. Psiq. Agitação": "Emerg. Psiq.", "Emerg. Psiq. Caso": "Emerg. Psiq.", "Emerg. Psiq. Dúvidas": "Emerg. Psiq.",
+  "Pancreatite Pt1": "Pancreatite", "Pancreatite Pt2": "Pancreatite", "Pancreatite Pt3": "Pancreatite", "Complicações Pancreatite": "Pancreatite",
+  "Artrite Gotosa": "Gota", "Gota Fisiopato Pt1": "Gota", "Gota Caso": "Gota", "Gota Diagnóstico Pt2": "Gota", "Gota Dúvidas": "Gota", "Gota Prescrição Pt3": "Gota",
+  "HDA x HDB": "HDA/HDB", "Hemorragias Tratamentos": "HDA/HDB", "Hemorragias Dúvidas": "HDA/HDB",
+  "Abd. Obstrutivo Fisiopato": "Abd. Obstrutivo", "Abd. Obstrutivo Raciocínio": "Abd. Obstrutivo", "Abd. Obstrutivo Caso": "Abd. Obstrutivo", "Abd. Obstrutivo Dúvidas": "Abd. Obstrutivo",
+  "Abd. Inflamatório Pt1": "Abd. Inflamatório", "Abd. Inflamatório Pt2": "Abd. Inflamatório", "Abd. Inflamatório Pt3": "Abd. Inflamatório", "Intox. Metanol": "Abd. Inflamatório",
+  // Módulo 7
+  "AVC Pt1": "AVC", "AVC Pt2": "AVC", "AVC Pt3": "AVC",
+  "AIT": "AIT", "AIT Caso": "AIT",
+  "Crises Convulsivas Tipos": "Crises Convulsivas", "Crises Convulsivas Tratamento": "Crises Convulsivas", "Crises Convulsivas Casos": "Crises Convulsivas", "Crises Convulsivas Dúvidas": "Crises Convulsivas",
+  "Cefaleias Pt1": "Cefaleias", "Cefaleias Pt2": "Cefaleias", "Cefaleias Casos": "Cefaleias", "Cefaleias Dúvidas": "Cefaleias",
+  "Vertigens Fisiologia": "Vertigens", "Vertigens Tratamentos": "Vertigens", "Vertigens Casos": "Vertigens", "Vertigens Dúvidas": "Vertigens",
+  "Rebaixamento Consciência Pt1": "Rebaixamento Consciência", "Rebaixamento Consciência Pt2": "Rebaixamento Consciência", "Rebaixamento Consciência Pt3": "Rebaixamento Consciência",
+  "Síncope Pt1": "Síncope", "Síncope Pt2": "Síncope", "Síncope Pt3": "Síncope",
+  // Módulo 8
+  "Hiponatremia Pt1": "Hiponatremia", "Hiponatremia Pt2": "Hiponatremia", "Hiponatremia Pt3": "Hiponatremia",
+  "Hipernatremia Pt1": "Hipernatremia", "Hipernatremia Pt2": "Hipernatremia",
+  "Hipercalemia": "Hipercalemia", "Hipercalemia Casos": "Hipercalemia",
+  "Hipocalemia e Mg/Ca": "Hipocalemia", "Hipocalemia Casos": "Hipocalemia",
+  "CAD/EHH Pt1": "CAD/EHH", "CAD/EHH Pt2": "CAD/EHH", "CAD/EHH Pt3": "CAD/EHH",
+  "Hipoglicemia Pt1": "Hipoglicemia", "Hipoglicemia Pt2": "Hipoglicemia",
+  "LRA Conceito": "LRA", "LRA Diagnóstico": "LRA", "LRA Casos": "LRA", "LRA Dúvidas": "LRA"
+};
+
 function getUniqueTopicFromLesson(name) {
+  if (LESSON_TOPIC_MAP[name]) return LESSON_TOPIC_MAP[name];
+  // Fallback: strip sufixos
   return name
     .replace(/\s*(Pt\d+|Parte\s*\d+|Dúvidas|Casos?(\s+Clínico)?s?|Caso\d*|Fisiopato|Tratamento|Checklist|Visão geral|Passo a passo|Medicações|Gripes|Entendendo|Condutas|Tipos|Fisiologia|Raciocínio|Alarme|Simulador)\s*/gi, "")
     .replace(/\s+/g, " ")
@@ -388,19 +522,27 @@ function normalize(str) {
 }
 
 function lessonMatchesTopic(lesson, topic) {
+  // Usa mapeamento explícito primeiro
+  var mapped = LESSON_TOPIC_MAP[lesson];
+  if (mapped) return mapped === topic;
+  // Fallback
   var nLesson = normalize(lesson);
   var nTopic = normalize(topic);
   var nClean = normalize(getUniqueTopicFromLesson(lesson));
-  if (nClean === nTopic || nLesson.indexOf(nTopic) >= 0 || nTopic.indexOf(nClean) >= 0) return true;
-  // Tenta match por palavras-chave: se o tema tem "/", testa cada parte
-  var parts = topic.split(/[\/,]+/).map(function(p) { return normalize(p.trim()); }).filter(Boolean);
-  if (parts.length > 1) {
-    if (parts.some(function(p) { return nLesson.indexOf(p) >= 0; })) return true;
+  return nClean === nTopic || nLesson.indexOf(nTopic) >= 0;
+}
+
+function getResumoForLesson(lessonName) {
+  if (LESSON_RESUMOS[lessonName]) return LESSON_RESUMOS[lessonName];
+  var topic = getUniqueTopicFromLesson(lessonName);
+  if (LESSON_RESUMOS[topic]) return LESSON_RESUMOS[topic];
+  var normalizedName = normalize(topic);
+  for (var key in LESSON_RESUMOS) {
+    var normalizedKey = normalize(key);
+    if (normalizedName === normalizedKey) return LESSON_RESUMOS[key];
+    if (normalizedName.indexOf(normalizedKey) >= 0 || normalizedKey.indexOf(normalizedName) >= 0) return LESSON_RESUMOS[key];
   }
-  // Tenta match por palavras significativas do tema (>3 chars)
-  var words = topic.split(/[\s\/\.\-,]+/).map(function(w) { return normalize(w); }).filter(function(w) { return w.length > 3; });
-  if (words.length > 0 && words.some(function(w) { return nLesson.indexOf(w) >= 0; })) return true;
-  return false;
+  return null;
 }
 
 function makeSchedule(weekNum) {
@@ -409,27 +551,27 @@ function makeSchedule(weekNum) {
     module: mod,
     days: [
       { day: "Seg", hours: "4h", blocks: [
-        { label: "Aula", dur: "2h", type: "theory", gk: "theory" },
-        { label: "Flashcards", dur: "1h", type: "review", gk: "review" },
-        { label: "Questões", dur: "1h", type: "practice", gk: "practice" },
+        { label: "Aula", dur: "2h", type: "theory", gk: "modules" },
+        { label: "Flashcards", dur: "1h", type: "review", gk: "flashcards" },
+        { label: "Questões", dur: "1h", type: "practice", gk: "activities" },
       ]},
       { day: "Ter", hours: "4h", blocks: [
-        { label: "Aula", dur: "2.5h", type: "theory", gk: "theory" },
-        { label: "Caso Clínico", dur: "1.5h", type: "practice", gk: "practice" },
+        { label: "Aula", dur: "2.5h", type: "theory", gk: "modules" },
+        { label: "Caso Clínico", dur: "1.5h", type: "practice", gk: "activities" },
       ]},
       { day: "Qua", hours: "4h", blocks: [
-        { label: "Aula", dur: "2h", type: "theory", gk: "theory" },
-        { label: "Flashcards", dur: "1h", type: "review", gk: "review" },
-        { label: "Questões", dur: "1h", type: "practice", gk: "practice" },
+        { label: "Aula", dur: "2h", type: "theory", gk: "modules" },
+        { label: "Flashcards", dur: "1h", type: "review", gk: "flashcards" },
+        { label: "Questões", dur: "1h", type: "practice", gk: "activities" },
       ]},
       { day: "Qui", hours: "4h", blocks: [
-        { label: "Aula", dur: "2h", type: "theory", gk: "theory" },
-        { label: "Mapa Mental / Resumo", dur: "1h", type: "review", gk: "consolidation" },
-        { label: "Investigação Clínica", dur: "1h", type: "practice", gk: "practice" },
+        { label: "Aula", dur: "2h", type: "theory", gk: "modules" },
+        { label: "Mapa Mental / Resumo", dur: "1h", type: "review", gk: "tips" },
+        { label: "Investigação Clínica", dur: "1h", type: "practice", gk: "activities" },
       ]},
       { day: "Sex", hours: "4h", blocks: [
-        { label: "Revisão da Semana", dur: "1.5h", type: "review", gk: "review" },
-        { label: "Questões + Casos", dur: "2.5h", type: "practice", gk: "practice" },
+        { label: "Revisão da Semana", dur: "1.5h", type: "review", gk: "flashcards" },
+        { label: "Questões + Casos", dur: "2.5h", type: "practice", gk: "activities" },
       ]},
     ]
   };
@@ -440,11 +582,35 @@ function makeSchedule(weekNum) {
 // ════════════════════════════════════════
 var STORAGE_KEY = "medico-pratica";
 var NAME_KEY = "medico-pratica-name";
-var MATERIALS_KEY = "medico-pratica-materials";
 var FLASHCARDS_KEY = "medico-pratica-flashcards";
+var STATS_KEY = "medico-pratica-stats";
 
-// Intervalos de repetição espaçada (em dias)
-var SPACED_INTERVALS = [1, 3, 7, 14, 30, 60];
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY) || "[]"); } catch(e) { return []; }
+}
+function saveSession(session) {
+  var stats = loadStats();
+  stats.push(session);
+  // Mantém últimas 100 sessões
+  if (stats.length > 100) stats = stats.slice(stats.length - 100);
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(e) {}
+}
+
+// ═══ ANKI SM-2 ALGORITHM ═══
+// Configurações (mesmos defaults do Anki)
+var ANKI = {
+  learningSteps: [1, 10],       // minutos (step 0 = 1min, step 1 = 10min)
+  graduatingInterval: 1,        // dias ao graduar
+  easyInterval: 4,              // dias ao clicar Fácil em card novo
+  startingEase: 2.5,            // ease factor inicial (250%)
+  easyBonus: 1.3,               // multiplicador extra pro Fácil
+  intervalModifier: 1.0,        // multiplicador global
+  maxInterval: 365,             // máximo em dias
+  lapseNewInterval: 0.5,        // ao errar: novo intervalo = antigo * 0.5
+  lapseMinInterval: 1,          // mínimo 1 dia ao reaprender
+  relearningSteps: [10]         // minutos ao reaprender após lapse
+};
+// Estados: "new", "learning", "review", "relearning"
 
 function loadFlashcards() {
   try { return JSON.parse(localStorage.getItem(FLASHCARDS_KEY) || "[]"); } catch(e) { return []; }
@@ -464,8 +630,13 @@ function addFlashcards(newCards) {
       verso: c.verso,
       tema: c.tema || "",
       nextReview: now,
-      interval: 0,
+      ivl: 0,                    // intervalo atual em dias
+      ease: ANKI.startingEase,
+      queue: "new",              // new, learning, review, relearning
+      step: 0,                   // step atual dentro de learningSteps/relearningSteps
       reviews: 0,
+      lapses: 0,
+      streak: 0,
       created: now
     };
   });
@@ -479,23 +650,174 @@ function getCardsForReview() {
   return cards.filter(function(c) { return c.nextReview <= today; });
 }
 
-function reviewCard(cardId, remembered) {
+function migrateCard(card) {
+  if (card.queue === undefined) {
+    card.queue = card.reviews > 2 ? "review" : "new";
+    card.step = 0;
+    card.ease = card.ease || ANKI.startingEase;
+    card.ivl = card.intervalDays || 0;
+    card.lapses = card.lapses || 0;
+    card.streak = card.streak || 0;
+  }
+  return card;
+}
+
+function setNextReview(card, minutes) {
+  var next = new Date();
+  if (minutes < 1440) {
+    // Menos de 1 dia: agenda em minutos (mas como usamos datas, agenda pra hoje)
+    card.nextReview = next.toISOString().slice(0, 10);
+  } else {
+    var days = Math.round(minutes / 1440);
+    next.setDate(next.getDate() + days);
+    card.nextReview = next.toISOString().slice(0, 10);
+  }
+}
+
+// quality: 0=De novo, 1=Difícil, 2=Bom, 3=Fácil
+function reviewCard(cardId, quality) {
   var cards = loadFlashcards();
   var idx = cards.findIndex(function(c) { return c.id === cardId; });
   if (idx < 0) return;
-  var card = Object.assign({}, cards[idx]);
-  if (remembered) {
-    card.interval = Math.min(card.interval + 1, SPACED_INTERVALS.length - 1);
-  } else {
-    card.interval = 0;
-  }
+  var card = migrateCard(Object.assign({}, cards[idx]));
   card.reviews++;
-  var days = SPACED_INTERVALS[card.interval];
-  var next = new Date();
-  next.setDate(next.getDate() + days);
-  card.nextReview = next.toISOString().slice(0, 10);
+
+  if (card.queue === "new" || card.queue === "learning") {
+    // ── CARD NOVO / APRENDENDO ──
+    var steps = ANKI.learningSteps;
+    if (quality === 0) {
+      // De novo: volta ao step 0
+      card.step = 0;
+      card.queue = "learning";
+      setNextReview(card, steps[0]);
+    } else if (quality === 1) {
+      // Difícil: repete step atual (ou avança se step > 0)
+      card.queue = "learning";
+      setNextReview(card, steps[card.step] || steps[steps.length - 1]);
+    } else if (quality === 2) {
+      // Bom: avança step
+      card.step++;
+      if (card.step >= steps.length) {
+        // Gradua!
+        card.queue = "review";
+        card.ivl = ANKI.graduatingInterval;
+        card.step = 0;
+        setNextReview(card, ANKI.graduatingInterval * 1440);
+      } else {
+        card.queue = "learning";
+        setNextReview(card, steps[card.step]);
+      }
+    } else {
+      // Fácil: gradua imediatamente com easy interval
+      card.queue = "review";
+      card.ivl = ANKI.easyInterval;
+      card.step = 0;
+      card.ease = Math.min(3.0, card.ease + 0.15);
+      card.streak++;
+      setNextReview(card, ANKI.easyInterval * 1440);
+    }
+  } else if (card.queue === "relearning") {
+    // ── REAPRENDENDO (após lapse) ──
+    var rsteps = ANKI.relearningSteps;
+    if (quality === 0) {
+      card.step = 0;
+      setNextReview(card, rsteps[0]);
+    } else if (quality === 1) {
+      setNextReview(card, rsteps[card.step] || rsteps[rsteps.length - 1]);
+    } else if (quality === 2) {
+      card.step++;
+      if (card.step >= rsteps.length) {
+        // Volta pra review com intervalo reduzido
+        card.queue = "review";
+        card.ivl = Math.max(ANKI.lapseMinInterval, Math.round(card.ivl * ANKI.lapseNewInterval));
+        card.step = 0;
+        setNextReview(card, card.ivl * 1440);
+      } else {
+        setNextReview(card, rsteps[card.step]);
+      }
+    } else {
+      // Fácil: sai de relearning direto
+      card.queue = "review";
+      card.ivl = Math.max(ANKI.lapseMinInterval + 1, Math.round(card.ivl * ANKI.lapseNewInterval));
+      card.step = 0;
+      card.streak++;
+      setNextReview(card, card.ivl * 1440);
+    }
+  } else {
+    // ── CARD EM REVISÃO ──
+    if (quality === 0) {
+      // Lapse! Vai pra relearning
+      card.lapses++;
+      card.streak = 0;
+      card.ease = Math.max(1.3, card.ease - 0.2);
+      card.queue = "relearning";
+      card.step = 0;
+      setNextReview(card, ANKI.relearningSteps[0]);
+    } else if (quality === 1) {
+      // Difícil: intervalo * 1.2, ease - 0.15
+      card.streak++;
+      card.ease = Math.max(1.3, card.ease - 0.15);
+      card.ivl = Math.min(ANKI.maxInterval, Math.max(card.ivl + 1, Math.round(card.ivl * 1.2 * ANKI.intervalModifier)));
+      setNextReview(card, card.ivl * 1440);
+    } else if (quality === 2) {
+      // Bom: intervalo * ease
+      card.streak++;
+      card.ivl = Math.min(ANKI.maxInterval, Math.max(card.ivl + 1, Math.round(card.ivl * card.ease * ANKI.intervalModifier)));
+      setNextReview(card, card.ivl * 1440);
+    } else {
+      // Fácil: intervalo * ease * easyBonus, ease + 0.15
+      card.streak++;
+      card.ease = Math.min(3.0, card.ease + 0.15);
+      card.ivl = Math.min(ANKI.maxInterval, Math.max(card.ivl + 1, Math.round(card.ivl * card.ease * ANKI.easyBonus * ANKI.intervalModifier)));
+      setNextReview(card, card.ivl * 1440);
+    }
+  }
+
   cards[idx] = card;
   saveFlashcards(cards);
+  return card.ivl;
+}
+
+function formatInterval(minutes) {
+  if (minutes < 60) return minutes + "min";
+  if (minutes < 1440) return Math.round(minutes / 60) + "h";
+  var days = Math.round(minutes / 1440);
+  if (days === 1) return "1d";
+  if (days < 30) return days + "d";
+  if (days < 365) return Math.round(days / 30) + "m";
+  return Math.round(days / 365) + "a";
+}
+
+function getNextIntervalPreview(card, quality) {
+  if (!card) return "";
+  var c = migrateCard(Object.assign({}, card));
+
+  if (c.queue === "new" || c.queue === "learning") {
+    var steps = ANKI.learningSteps;
+    if (quality === 0) return formatInterval(steps[0]);
+    if (quality === 1) return formatInterval(steps[c.step] || steps[steps.length - 1]);
+    if (quality === 2) {
+      var ns = c.step + 1;
+      if (ns >= steps.length) return ANKI.graduatingInterval + "d";
+      return formatInterval(steps[ns]);
+    }
+    return ANKI.easyInterval + "d";
+  }
+  if (c.queue === "relearning") {
+    var rs = ANKI.relearningSteps;
+    if (quality === 0) return formatInterval(rs[0]);
+    if (quality === 1) return formatInterval(rs[c.step] || rs[rs.length - 1]);
+    if (quality === 2) {
+      if (c.step + 1 >= rs.length) return Math.max(ANKI.lapseMinInterval, Math.round(c.ivl * ANKI.lapseNewInterval)) + "d";
+      return formatInterval(rs[c.step + 1]);
+    }
+    return Math.max(ANKI.lapseMinInterval + 1, Math.round(c.ivl * ANKI.lapseNewInterval)) + "d";
+  }
+  // Review
+  if (quality === 0) return formatInterval(ANKI.relearningSteps[0]);
+  if (quality === 1) return Math.min(ANKI.maxInterval, Math.max(c.ivl + 1, Math.round(c.ivl * 1.2))) + "d";
+  if (quality === 2) return Math.min(ANKI.maxInterval, Math.max(c.ivl + 1, Math.round(c.ivl * c.ease))) + "d";
+  return Math.min(ANKI.maxInterval, Math.max(c.ivl + 1, Math.round(c.ivl * Math.min(3.0, c.ease + 0.15) * ANKI.easyBonus))) + "d";
 }
 var FEEDBACK_KEY = "medico-pratica-feedback";
 
@@ -738,9 +1060,45 @@ function PomodoroTimer({ dur, label, color, onClose }) {
 }
 
 // ════════════════════════════════════════
+// HELPER: RESUMOS DAS AULAS ASSISTIDAS
+// ════════════════════════════════════════
+function buildWatchedResumos(watchedState, relevantTopics) {
+  var resumos = [];
+  var seen = {};
+  MODULES.forEach(function(m) {
+    var watched = watchedState[m.id] || [];
+    watched.forEach(function(i) {
+      var lesson = m.lessons[i];
+      if (!lesson) return;
+      var topic = getUniqueTopicFromLesson(lesson);
+      if (seen[topic]) return;
+      if (relevantTopics && relevantTopics.length > 0) {
+        var isRelevant = relevantTopics.some(function(rt) {
+          return normalize(topic).indexOf(normalize(rt)) >= 0 || normalize(rt).indexOf(normalize(topic)) >= 0;
+        });
+        if (!isRelevant) return;
+      }
+      var resumo = getResumoForLesson(lesson);
+      if (resumo) {
+        seen[topic] = true;
+        resumos.push(resumo);
+      }
+    });
+  });
+  return resumos;
+}
+
+function buildResumoPromptBlock(watchedState, relevantTopics) {
+  var resumos = buildWatchedResumos(watchedState, relevantTopics);
+  if (!resumos.length) return "";
+  var joined = resumos.slice(0, 5).join("\n---\n").slice(0, 8000);
+  return "\n\nRESUMOS DAS AULAS JÁ ESTUDADAS PELO ALUNO (use como base para criar questões fiéis ao conteúdo):\n" + joined + "\n";
+}
+
+// ════════════════════════════════════════
 // FLASHCARDS COMPONENT
 // ════════════════════════════════════════
-function Flashcards({ errorBank, watchedState, materials, onClose }) {
+function Flashcards({ errorBank, watchedState, onClose }) {
   var [cards, setCards] = useState(null);
   var [index, setIndex] = useState(0);
   var [flipped, setFlipped] = useState(false);
@@ -773,15 +1131,11 @@ function Flashcards({ errorBank, watchedState, materials, onClose }) {
     setFlipped(false);
     setDone(false);
     var topics = getTopics();
-    if (!topics.length && !(materials && materials.length)) { setError("Assista algumas aulas ou adicione materiais primeiro."); setLoading(false); return; }
+    if (!topics.length) { setError("Assista algumas aulas primeiro."); setLoading(false); return; }
     var errTopics = Object.keys(errorBank).filter(function(t) { return errorBank[t] > 0; }).sort(function(a,b) { return (errorBank[b]||0) - (errorBank[a]||0); });
-    var materialExcerpt = "";
-    if (materials && materials.length) {
-      materialExcerpt = materials.slice(0, 3).map(function(m) { return m.content.slice(0, 1500); }).join("\n---\n");
-    }
     var allTopics = errTopics.concat(topics).slice(0, 5).join(", ") || "emergências médicas";
-    var matRef = materialExcerpt ? '\n\nUSE O SEGUINTE MATERIAL DO ALUNO COMO BASE PRINCIPAL para criar os flashcards (adapte ao contexto de emergência):\n' + materialExcerpt + '\n' : '';
-    var prompt = 'Crie 6 flashcards de medicina sobre: ' + allTopics + '.' + matRef + '\nAPENAS JSON: {"flashcards":[{"frente":"pergunta","verso":"resposta"}]}';
+    var resumoRef = buildResumoPromptBlock(watchedState, allTopics.split(", "));
+    var prompt = 'Crie 6 flashcards de medicina sobre: ' + allTopics + '.' + resumoRef + '\nAPENAS JSON: {"flashcards":[{"frente":"pergunta","verso":"resposta"}]}';
     fetchAI({ max_tokens: 1200, messages: [{ role: "user", content: prompt }] })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -867,20 +1221,27 @@ function Flashcards({ errorBank, watchedState, materials, onClose }) {
             <span style={{ fontSize: 12, color: "#444", fontWeight: 600 }}>{index + 1} / {cards.length}</span>
           </div>
 
-          <div onClick={function() { setFlipped(!flipped); }} style={{ cursor: "pointer", minHeight: 200, borderRadius: 18, border: "1px solid " + (flipped ? col + "40" : "rgba(255,255,255,0.07)"), background: flipped ? col + "08" : "rgba(255,255,255,0.02)", padding: "28px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s ease", position: "relative" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: flipped ? col : "#444", marginBottom: 16 }}>{flipped ? "RESPOSTA" : "PERGUNTA — clique para revelar"}</div>
-            <div style={{ fontSize: flipped ? 13 : 15, color: flipped ? "#8B99B0" : "#F0F2F5", lineHeight: 1.8, fontWeight: flipped ? 400 : 600 }}>{flipped ? card.verso : card.frente}</div>
+          <div style={{ minHeight: 200, borderRadius: 18, border: "1px solid " + (flipped ? col + "40" : "rgba(255,255,255,0.07)"), background: flipped ? col + "08" : "rgba(255,255,255,0.02)", padding: "28px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s ease", position: "relative" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "#444", marginBottom: 12 }}>PERGUNTA</div>
+            <div style={{ fontSize: 15, color: "#F0F2F5", lineHeight: 1.8, fontWeight: 600 }}>{card.frente}</div>
+            {flipped && (
+              <div style={{ width: "100%", marginTop: 20 }}>
+                <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: 16 }} />
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: col, marginBottom: 12 }}>RESPOSTA</div>
+                <div style={{ fontSize: 13, color: "#8B99B0", lineHeight: 1.8, fontWeight: 400 }}>{card.verso}</div>
+              </div>
+            )}
           </div>
 
+          {!flipped && (
+            <div style={{ marginTop: 16, textAlign: "center" }}>
+              <button onClick={function() { setFlipped(true); }} style={{ padding: "10px 28px", borderRadius: 12, border: "1px solid " + col + "40", background: col + "10", color: col, fontWeight: 700, cursor: "pointer", fontSize: 13 }}>🔄 Virar card</button>
+            </div>
+          )}
           {flipped && (
             <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
               <button onClick={function() { if (index < cards.length - 1) { setIndex(index + 1); setFlipped(false); } else { setDone(true); } }} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "rgba(6,214,160,0.12)", color: "#06D6A0", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✅ Sabia</button>
               <button onClick={function() { if (index < cards.length - 1) { setIndex(index + 1); setFlipped(false); } else { setDone(true); } }} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "rgba(255,77,109,0.12)", color: "#FF4D6D", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>❌ Não sabia</button>
-            </div>
-          )}
-          {!flipped && (
-            <div style={{ marginTop: 16, textAlign: "center" }}>
-              <span style={{ fontSize: 12, color: "#333" }}>Toque no card para ver a resposta</span>
             </div>
           )}
         </div>
@@ -905,649 +1266,17 @@ function FeedbackBox({ color }) {
   );
 }
 
-// ════════════════════════════════════════
-// PRACTICE COMPONENT
-// ════════════════════════════════════════
-function Practice({ mod, mode, onClose, topicLevels, dispatch, errorBank, watchedState, materials }) {
-  var col = mod.color;
-  var [loading, setLoading] = useState(false);
-  var [questions, setQuestions] = useState(null);
-  var [qIndex, setQIndex] = useState(0);
-  var [selected, setSelected] = useState(null);
-  var [revealed, setRevealed] = useState(false);
-  var [score, setScore] = useState({ correct: 0, total: 0 });
-  var [error, setError] = useState(null);
-  var [caseData, setCaseData] = useState(null);
-  var [userAnswer, setUserAnswer] = useState("");
-  var [caseFeedback, setCaseFeedback] = useState(null);
-  var [caseStep, setCaseStep] = useState(0);
-  var [caseScores, setCaseScores] = useState([]);
-  var [caseResult, setCaseResult] = useState(null);
-  var [caseTopic, setCaseTopic] = useState("");
-
-  var isCase = mode === "cases";
-  var isSimulation = mode === "simulation";
-  var numQuestions = isSimulation ? 10 : 1;
-  var titles = { questions: "Questões Adaptativas", cases: "Caso Clínico", simulation: "Simulado (10 questões)" };
-  var icons = { questions: "📝", cases: "🏥", simulation: "🎯" };
-
-  function getDiff(topic) { return getDiffFromLevel(topicLevels, topic); }
-
-  function buildTopicMix() {
-    var ws = watchedState || {};
-    var current = [];
-    (ws[mod.id] || []).forEach(function(i) {
-      var t = getUniqueTopicFromLesson(mod.lessons[i]);
-      if (!current.includes(t)) current.push(t);
-    });
-    var review = [];
-    MODULES.forEach(function(m) {
-      if (m.id === mod.id) return;
-      (ws[m.id] || []).forEach(function(i) {
-        var t = getUniqueTopicFromLesson(m.lessons[i]);
-        if (!review.includes(t)) review.push(t);
-      });
-    });
-    return { current: current, review: review };
-  }
-
-  var generate = useCallback(function() {
-    setLoading(true);
-    setError(null);
-    setCaseScores([]);
-    setCaseResult(null);
-    var mix = buildTopicMix();
-    // Usa todos os temas do módulo atual (não só os marcados) + revisão
-    var modTopics = (mod.topics || []).slice();
-    var allTopicPool = modTopics.concat(mix.review).sort(function() { return Math.random() - 0.5; });
-    // Remove duplicatas
-    var seen = {};
-    allTopicPool = allTopicPool.filter(function(t) { if (seen[t]) return false; seen[t] = true; return true; });
-    var cp, rp;
-    if (numQuestions <= 2) {
-      var picked = allTopicPool.slice(0, numQuestions);
-      cp = picked;
-      rp = [];
-    } else {
-      var half = Math.ceil(numQuestions / 2);
-      cp = modTopics.sort(function() { return Math.random() - 0.5; }).slice(0, half);
-      rp = mix.review.sort(function() { return Math.random() - 0.5; }).slice(0, numQuestions - cp.length);
-      if (!cp.length) cp.push.apply(cp, rp.slice(0, half));
-    }
-    var td = cp.concat(rp).map(function(t) { return t + " (" + DIFF_LABELS[getDiff(t)] + ")"; });
-    var ebKeys = Object.keys(errorBank).filter(function(t) { return errorBank[t] > 0; });
-    var ebTxt = ebKeys.length ? "\n\nIMPORTANTE: Inclua 1-2 questões sobre estes temas (erros anteriores): " + ebKeys.join(", ") : "";
-
-    // Monta trecho dos materiais do aluno para enriquecer as questões
-    var matRef = "";
-    if (materials && materials.length) {
-      var matExcerpts = materials.slice(0, 3).map(function(m) { return "### " + m.title + "\n" + m.content.slice(0, 2000); }).join("\n---\n");
-      matRef = "\n\nMATERIAL DE ESTUDO DO ALUNO (use como base principal para criar questões mais fiéis ao conteúdo estudado):\n" + matExcerpts + "\n";
-    }
-
-    var prompt;
-    if (isCase) {
-      var allTopics = cp.concat(rp);
-      var topic = ebKeys.length
-        ? ebKeys.sort(function(a,b){ return (errorBank[b]||0)-(errorBank[a]||0); })[0]
-        : (allTopics[0] || "Emergências");
-      var diff = DIFF_LABELS[getDiff(topic)];
-      setCaseTopic(topic);
-      prompt = 'Você é preceptor de emergência em UPA no Brasil. Crie 1 caso clínico sobre "' + topic + '", nível ' + diff + '.\nUse terminologia médica correta, sinais vitais realistas, recursos do SUS/RENAME. Respostas devem diferenciar dos principais diagnósticos diferenciais.' + matRef + '\nAPENAS JSON: {"caso":{"titulo":"titulo","tema":"' + topic + '","dificuldade":"' + diff + '","historia":"3 parágrafos com caso realista em UPA","pergunta_1":"Hipótese diagnóstica principal e por quê?","pergunta_2":"Exames disponíveis na UPA e achados esperados?","pergunta_3":"Conduta completa (estabilização, medicações, transferência)?","resposta_1":"resposta completa","resposta_2":"resposta completa","resposta_3":"resposta completa"}}';
-    } else {
-      var topics = cp.concat(rp).slice(0, 4).join(", ") || "emergências médicas";
-      var seed = Math.floor(Math.random() * 9999);
-      prompt = '[Sessão #' + seed + '] Você é preceptor de emergência em UPA no Brasil. Crie ' + numQuestions + ' questões ORIGINAIS e DIFERENTES das anteriores sobre: ' + topics + '.' + ebTxt + matRef +
-        '\nREGRAS OBRIGATÓRIAS:' +
-        '\n- Terminologia médica correta (PCR=Parada Cardiorrespiratória, derivações no ECG, não dermatomas)' +
-        '\n- PROIBIDO alternativas tipo "todas as anteriores", "nenhuma das anteriores" ou "A e B estão corretas"' +
-        '\n- 4 alternativas distintas, cada uma um diagnóstico/conduta diferente e plausível' +
-        '\n- Enunciado com caso clínico curto incluindo sinais vitais quando aplicável' +
-        '\n- Explicação deve dizer por que a correta é certa E por que cada errada está errada' +
-        '\n- O enunciado deve ser coerente com a resposta correta. Não forneça informações no enunciado que contradigam ou tornem desnecessária a resposta correta' +
-        '\n- Varie subtópicos: diagnóstico, conduta, fisiopatologia, farmacologia' +
-        '\nAPENAS JSON: {"questoes":[{"enunciado":"caso clínico","alternativas":["A)...","B)...","C)...","D)..."],"correta":0,"explicacao":"explicação completa","tema":"nome","dificuldade":"Muito Fácil|Fácil|Moderado|Difícil|Muito Difícil|Impossível"}]}';
-    }
-
-    fetchAI({ max_tokens: 2000, messages: [{ role: "user", content: prompt }] })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.error) { console.error("API error:", d.error); throw new Error(d.error); }
-      var txt = (d.content || []).map(function(x) { return x.text || ""; }).join("\n");
-      if (!txt.trim()) throw new Error("Resposta vazia da API");
-      var parsed = extractJSON(txt);
-      if (isCase) { setCaseData(parsed.caso); setCaseStep(0); }
-      else { setQuestions(parsed.questoes); setQIndex(0); setSelected(null); setRevealed(false); setScore({ correct: 0, total: 0 }); }
-      setLoading(false);
-    })
-    .catch(function(err) { console.error("Erro ao gerar:", err); setError("Erro ao gerar. Tente novamente."); setLoading(false); });
-  }, [isCase, numQuestions, mod, materials]);
-
-  useEffect(function() { generate(); }, []);
-
-  // Armazena respostas do simulado para corrigir no final
-  var [simAnswers, setSimAnswers] = useState({});
-
-  function handleAnswer(idx) {
-    if (isSimulation) {
-      // Simulado: só salva a resposta, sem revelar
-      setSimAnswers(function(prev) { var n = Object.assign({}, prev); n[qIndex] = idx; return n; });
-      if (qIndex < questions.length - 1) {
-        setQIndex(qIndex + 1);
-      }
-      return;
-    }
-    if (revealed) return;
-    setSelected(idx);
-    setRevealed(true);
-    var q = questions[qIndex];
-    var ok = idx === q.correta;
-    var topic = q.tema || "Geral";
-    setScore(function(s) { return ok ? { correct: s.correct + 1, total: s.total + 1 } : { correct: s.correct, total: s.total + 1 }; });
-    if (ok) {
-      dispatch({ type: "SET_TOPIC_LEVELS", value: function(p) {
-        var n = Object.assign({}, p);
-        var cur = n[topic] && typeof n[topic] === "object" ? Object.assign({}, n[topic]) : { nivel: 0, pontos: 0 };
-        cur.pontos = (cur.pontos || 0) + 1;
-        var needed = DIFF_POINTS[cur.nivel] || 1;
-        if (cur.pontos >= needed && cur.nivel < 5) {
-          cur.nivel++;
-          cur.pontos = 0;
-        }
-        n[topic] = cur;
-        return n;
-      }});
-      dispatch({ type: "SET_ERROR_BANK", value: function(p) { var n = Object.assign({}, p); if (n[topic] > 0) n[topic]--; return n; } });
-    } else {
-      dispatch({ type: "SET_TOPIC_LEVELS", value: function(p) {
-        var n = Object.assign({}, p);
-        var cur = n[topic] && typeof n[topic] === "object" ? Object.assign({}, n[topic]) : { nivel: 0, pontos: 0 };
-        if (cur.nivel > 0) {
-          cur.nivel--;
-          cur.pontos = 0;
-        } else {
-          cur.pontos = 0;
-        }
-        n[topic] = cur;
-        return n;
-      }});
-      dispatch({ type: "SET_ERROR_BANK", value: function(p) { var n = Object.assign({}, p); n[topic] = (n[topic] || 0) + 1; return n; } });
-    }
-  }
-
-  // Finalizar simulado: corrigir tudo de uma vez
-  var [simFinished, setSimFinished] = useState(false);
-  function finishSimulation() {
-    var correct = 0;
-    questions.forEach(function(q, i) {
-      var ok = simAnswers[i] === q.correta;
-      var topic = q.tema || "Geral";
-      if (ok) {
-        correct++;
-        dispatch({ type: "SET_TOPIC_LEVELS", value: function(p) {
-          var n = Object.assign({}, p);
-          var cur = n[topic] && typeof n[topic] === "object" ? Object.assign({}, n[topic]) : { nivel: 0, pontos: 0 };
-          cur.pontos = (cur.pontos || 0) + 1;
-          var needed = DIFF_POINTS[cur.nivel] || 1;
-          if (cur.pontos >= needed && cur.nivel < 5) {
-            cur.nivel++;
-            cur.pontos = 0;
-          }
-          n[topic] = cur;
-          return n;
-        }});
-        dispatch({ type: "SET_ERROR_BANK", value: function(p) { var n = Object.assign({}, p); if (n[topic] > 0) n[topic]--; return n; } });
-      } else {
-        dispatch({ type: "SET_TOPIC_LEVELS", value: function(p) {
-          var n = Object.assign({}, p);
-          var cur = n[topic] && typeof n[topic] === "object" ? Object.assign({}, n[topic]) : { nivel: 0, pontos: 0 };
-          if (cur.nivel > 0) {
-            cur.nivel--;
-            cur.pontos = 0;
-          } else {
-            cur.pontos = 0;
-          }
-          n[topic] = cur;
-          return n;
-        }});
-        dispatch({ type: "SET_ERROR_BANK", value: function(p) { var n = Object.assign({}, p); n[topic] = (n[topic] || 0) + 1; return n; } });
-      }
-    });
-    setScore({ correct: correct, total: questions.length });
-    setSimFinished(true);
-  }
-
-  function submitCase() {
-    if (!userAnswer.trim()) return;
-    setLoading(true);
-    var q = caseData["pergunta_" + (caseStep + 1)];
-    var a = caseData["resposta_" + (caseStep + 1)];
-    var topic = caseTopic || caseData.tema || "Geral";
-    fetchAI({ max_tokens: 800, messages: [{ role: "user", content: 'Avalie a resposta do aluno. Pergunta: ' + q + ' | Resposta correta: ' + a + ' | Resposta do aluno: ' + userAnswer + ' | APENAS JSON: {"avaliacao":"correta|parcial|incorreta","nota":0,"feedback":"feedback curto","resposta_ideal":"resposta ideal curta"}' }] })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var txt = d.content.map(function(x) { return x.text || ""; }).join("\n");
-      var fb = extractJSON(txt);
-      var nota = typeof fb.nota === "number" ? fb.nota : (fb.avaliacao === "correta" ? 9 : fb.avaliacao === "parcial" ? 6 : 3);
-      var newScores = caseScores.concat([nota]);
-      setCaseScores(newScores);
-      setCaseFeedback(fb);
-      // Se foi a última etapa, calcular resultado final e atualizar adaptive
-      if (caseStep === 2) {
-        var avg = Math.round(newScores.reduce(function(s,n){ return s+n; }, 0) / newScores.length);
-        setCaseResult({ avg: avg, scores: newScores, topic: topic });
-        if (avg >= 7) {
-          dispatch({ type: "SET_TOPIC_LEVELS", value: function(p) {
-            var n = Object.assign({}, p);
-            var cur = n[topic] && typeof n[topic] === "object" ? Object.assign({}, n[topic]) : { nivel: 0, pontos: 0 };
-            cur.pontos = (cur.pontos || 0) + 2;
-            var needed = DIFF_POINTS[cur.nivel] || 1;
-            while (cur.pontos >= needed && cur.nivel < 5) {
-              cur.pontos -= needed;
-              cur.nivel++;
-              needed = DIFF_POINTS[cur.nivel] || 1;
-            }
-            n[topic] = cur;
-            return n;
-          }});
-          dispatch({ type: "SET_ERROR_BANK", value: function(p) { var n = Object.assign({}, p); if ((n[topic]||0) > 0) n[topic] = Math.max(0, (n[topic]||0) - 1); return n; } });
-        } else if (avg < 5) {
-          dispatch({ type: "SET_TOPIC_LEVELS", value: function(p) {
-            var n = Object.assign({}, p);
-            var cur = n[topic] && typeof n[topic] === "object" ? Object.assign({}, n[topic]) : { nivel: 0, pontos: 0 };
-            if (cur.nivel > 0) { cur.nivel--; cur.pontos = 0; } else { cur.pontos = 0; }
-            n[topic] = cur;
-            return n;
-          }});
-          dispatch({ type: "SET_ERROR_BANK", value: function(p) { var n = Object.assign({}, p); n[topic] = (n[topic]||0) + 1; return n; } });
-        }
-      }
-      setLoading(false);
-    })
-    .catch(function() { setError("Erro ao avaliar."); setLoading(false); });
-  }
-
-  // ─── Modal wrapper ───
-  var modalStyle = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 };
-  var panelStyle = { background: "#0F1117", borderRadius: 24, maxWidth: 640, width: "100%", maxHeight: "88vh", overflow: "auto", border: "1px solid rgba(255,255,255,0.07)" };
-
-  function renderModal(children) {
-    return (
-      <div style={modalStyle}>
-        <div style={panelStyle}>
-          <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(135deg," + col + "10,transparent)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: col + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{icons[mode]}</div>
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#F0F2F5" }}>{titles[mode]}</div>
-              </div>
-            </div>
-            <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#666", width: 32, height: 32, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-          </div>
-          <div style={{ padding: "20px 24px" }}>{children}</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading
-  if (loading && !questions && !caseData) return renderModal(<div style={{ textAlign: "center", padding: 48 }}><div style={{ width: 44, height: 44, border: "3px solid " + col + "30", borderTopColor: col, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} /><div style={{ color: "#555", fontSize: 13, fontWeight: 600 }}>Gerando questões...</div></div>);
-  if (error) return renderModal(<div style={{ textAlign: "center", padding: 32 }}><div style={{ color: "#FF4D6D", marginBottom: 16, fontSize: 14 }}>{error}</div><button onClick={generate} style={{ padding: "10px 28px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Tentar novamente</button></div>);
-
-  // Simulado — correção no final
-  if (isSimulation && questions && !simFinished) {
-    var q = questions[qIndex];
-    var answered = Object.keys(simAnswers).length;
-    return renderModal(<>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: "#555", fontWeight: 700 }}>Questão {qIndex + 1} de {questions.length}</div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: col + "18", color: col }}>{answered}/{questions.length} respondidas</span>
-          </div>
-        </div>
-        <div style={{ fontSize: 14, color: "#D0D8E8", lineHeight: 1.8, padding: "16px 18px", background: "rgba(255,255,255,0.03)", borderRadius: 14, marginBottom: 16, borderLeft: "3px solid " + col + "40" }}>{q.enunciado}</div>
-        <div style={{ display: "grid", gap: 8 }}>
-          {q.alternativas.map(function(alt, idx) {
-            var isSel = simAnswers[qIndex] === idx;
-            return (
-              <div key={idx} onClick={function() { handleAnswer(idx); }} style={{ padding: "12px 16px", borderRadius: 12, cursor: "pointer", background: isSel ? col + "15" : "rgba(255,255,255,0.02)", border: "1px solid " + (isSel ? col : "rgba(255,255,255,0.06)"), display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: isSel ? col : "rgba(255,255,255,0.05)", color: isSel ? "#0F1117" : "#555" }}>
-                  {String.fromCharCode(65 + idx)}
-                </div>
-                <span style={{ fontSize: 13, color: isSel ? "#F0F2F5" : "#8B99B0", lineHeight: 1.6 }}>{alt.replace(/^[A-D]\)\s*/, "")}</span>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 8 }}>
-            {qIndex > 0 && <button onClick={function() { setQIndex(qIndex - 1); }} style={{ padding: "10px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#888", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>← Anterior</button>}
-            {qIndex < questions.length - 1 && <button onClick={function() { setQIndex(qIndex + 1); }} style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Próxima →</button>}
-          </div>
-          {answered === questions.length && <button onClick={finishSimulation} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "#06D6A0", color: "#0F1117", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>Finalizar Simulado</button>}
-        </div>
-        {/* Navegação rápida */}
-        <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
-          {questions.map(function(_, i) {
-            var hasAnswer = simAnswers[i] !== undefined;
-            return <div key={i} onClick={function() { setQIndex(i); }} style={{ width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, cursor: "pointer", background: i === qIndex ? col : hasAnswer ? "#06D6A030" : "rgba(255,255,255,0.04)", color: i === qIndex ? "#fff" : hasAnswer ? "#06D6A0" : "#444", border: "1px solid " + (i === qIndex ? col : hasAnswer ? "#06D6A030" : "rgba(255,255,255,0.06)") }}>{i + 1}</div>;
-          })}
-        </div>
-      </>);
-  }
-
-  // Simulado — resultado final com correção
-  if (isSimulation && simFinished && questions) {
-    var pct = Math.round((score.correct / score.total) * 100);
-    return renderModal(<>
-        <div style={{ textAlign: "center", padding: "16px 0 20px" }}>
-          <div style={{ fontSize: 52, marginBottom: 12 }}>{pct >= 80 ? "🎉" : pct >= 50 ? "💪" : "📚"}</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#F0F2F5" }}>{score.correct}<span style={{ color: "#444" }}>/{score.total}</span></div>
-          <div style={{ fontSize: 14, color: pct >= 80 ? "#06D6A0" : pct >= 50 ? "#F77F00" : "#FF4D6D", fontWeight: 700, marginTop: 4 }}>{pct}% de acerto</div>
-        </div>
-        <div style={{ maxHeight: 400, overflow: "auto", display: "grid", gap: 10 }}>
-          {questions.map(function(q, i) {
-            var userAns = simAnswers[i];
-            var ok = userAns === q.correta;
-            return <div key={i} style={{ padding: "14px 16px", borderRadius: 14, background: ok ? "rgba(6,214,160,0.06)" : "rgba(255,77,109,0.06)", border: "1px solid " + (ok ? "rgba(6,214,160,0.15)" : "rgba(255,77,109,0.15)") }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: ok ? "#06D6A0" : "#FF4D6D" }}>{ok ? "✅" : "❌"} Questão {i + 1}</span>
-                {q.tema && <span style={{ fontSize: 11, color: "#555" }}>{q.tema}</span>}
-              </div>
-              <div style={{ fontSize: 12, color: "#8B99B0", lineHeight: 1.6, marginBottom: 6 }}>{q.enunciado.slice(0, 120)}...</div>
-              {!ok && <div style={{ fontSize: 12, color: "#FF4D6D", marginBottom: 4 }}>Sua: {q.alternativas[userAns] ? q.alternativas[userAns].replace(/^[A-D]\)\s*/, "") : "Não respondida"}</div>}
-              <div style={{ fontSize: 12, color: "#06D6A0" }}>Correta: {q.alternativas[q.correta].replace(/^[A-D]\)\s*/, "")}</div>
-              <div style={{ fontSize: 11, color: "#666", lineHeight: 1.6, marginTop: 6 }}>{q.explicacao}</div>
-            </div>;
-          })}
-        </div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
-          <button onClick={function() { setQuestions(null); setSimAnswers({}); setSimFinished(false); generate(); }} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Novo Simulado</button>
-          <button onClick={onClose} style={{ padding: "10px 24px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555", fontWeight: 600, cursor: "pointer" }}>Fechar</button>
-        </div>
-        <FeedbackBox color={col} />
-      </>);
-  }
-
-  // Questions (modo normal — correção imediata, sem número fixo)
-  if (questions && qIndex < questions.length) {
-    var q = questions[qIndex];
-    var qTopic = q.tema || "Geral";
-    return renderModal(<>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: "#555", fontWeight: 700 }}>Questão {score.total + 1}</div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <DiffBadge topic={qTopic} topicLevels={topicLevels} />
-            <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: "#06D6A018", color: "#06D6A0" }}>✓ {score.correct}/{score.total}</span>
-          </div>
-        </div>
-        {revealed && q.tema && <div style={{ fontSize: 11, color: "#555", marginBottom: 12, fontWeight: 600 }}>Tema: <span style={{ color: col }}>{q.tema}</span></div>}
-        <div style={{ fontSize: 14, color: "#D0D8E8", lineHeight: 1.8, padding: "16px 18px", background: "rgba(255,255,255,0.03)", borderRadius: 14, marginBottom: 16, borderLeft: "3px solid " + col + "40" }}>{q.enunciado}</div>
-        <div style={{ display: "grid", gap: 8 }}>
-          {q.alternativas.map(function(alt, idx) {
-            var isCorrect = idx === q.correta;
-            var isSelected = idx === selected;
-            var bg = "rgba(255,255,255,0.02)", bc = "rgba(255,255,255,0.06)", tc = "#8B99B0";
-            if (revealed && isCorrect) { bg = "rgba(6,214,160,0.1)"; bc = "#06D6A0"; tc = "#06D6A0"; }
-            else if (revealed && isSelected) { bg = "rgba(255,77,109,0.1)"; bc = "#FF4D6D"; tc = "#FF4D6D"; }
-            return (
-              <div key={idx} onClick={function() { handleAnswer(idx); }} style={{ padding: "12px 16px", borderRadius: 12, cursor: revealed ? "default" : "pointer", background: bg, border: "1px solid " + bc, display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: revealed && isCorrect ? "#06D6A0" : revealed && isSelected ? "#FF4D6D" : "rgba(255,255,255,0.05)", color: revealed && (isCorrect || isSelected) ? "#0F1117" : "#555" }}>
-                  {revealed ? (isCorrect ? "✓" : isSelected ? "✗" : String.fromCharCode(65 + idx)) : String.fromCharCode(65 + idx)}
-                </div>
-                <span style={{ fontSize: 13, color: tc, lineHeight: 1.6 }}>{alt.replace(/^[A-D]\)\s*/, "")}</span>
-              </div>
-            );
-          })}
-        </div>
-        {revealed && <div style={{ marginTop: 14, padding: 16, borderRadius: 14, background: selected === q.correta ? "rgba(6,214,160,0.06)" : "rgba(255,77,109,0.06)", border: "1px solid " + (selected === q.correta ? "rgba(6,214,160,0.15)" : "rgba(255,77,109,0.15)") }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: selected === q.correta ? "#06D6A0" : "#FF4D6D", marginBottom: 8 }}>{selected === q.correta ? "✅ Correto!" : "❌ Errou — esse tema volta para reforço"}</div>
-          <div style={{ fontSize: 13, color: "#8B99B0", lineHeight: 1.7 }}>{q.explicacao}</div>
-        </div>}
-        {revealed && <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          {qIndex < questions.length - 1
-            ? <button onClick={function() { setQIndex(qIndex + 1); setSelected(null); setRevealed(false); }} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Próxima →</button>
-            : <button onClick={function() { generate(); }} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Próxima →</button>
-          }
-        </div>}
-      </>);
-  }
-
-  // Results
-  if (questions && qIndex >= questions.length) {
-    var pct = Math.round((score.correct / score.total) * 100);
-    return renderModal(<>
-        <div style={{ textAlign: "center", padding: "20px 0" }}>
-          <div style={{ fontSize: 52, marginBottom: 12 }}>{pct >= 80 ? "🎉" : pct >= 50 ? "💪" : "📚"}</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#F0F2F5" }}>{score.correct}<span style={{ color: "#444" }}>/{score.total}</span></div>
-          <div style={{ fontSize: 14, color: pct >= 80 ? "#06D6A0" : pct >= 50 ? "#F77F00" : "#FF4D6D", fontWeight: 700, marginTop: 4 }}>{pct}% de acerto</div>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24 }}>
-            <button onClick={function() { setQuestions(null); generate(); }} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>🔄 Novas questões</button>
-            <button onClick={onClose} style={{ padding: "10px 24px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555", fontWeight: 600, cursor: "pointer" }}>Fechar</button>
-          </div>
-        </div>
-        <FeedbackBox color={col} />
-      </>);
-  }
-
-  // Case result screen
-  if (caseResult) {
-    var avg = caseResult.avg;
-    var nextDiff = avg >= 7 ? DIFF_LABELS[Math.min(5, getDiff(caseResult.topic) + 1)] : avg < 5 ? DIFF_LABELS[Math.max(0, getDiff(caseResult.topic) - 1)] : DIFF_LABELS[getDiff(caseResult.topic)];
-    var medal = avg >= 9 ? "🏆" : avg >= 7 ? "🎉" : avg >= 5 ? "💪" : "📚";
-    var msgColor = avg >= 7 ? "#06D6A0" : avg >= 5 ? "#F77F00" : "#FF4D6D";
-    var adaptMsg = avg >= 7 ? "Próximo caso será mais difícil ↑" : avg < 5 ? "Próximo caso será mais fácil ↓" : "Dificuldade mantida →";
-    return renderModal(<>
-        <div style={{ textAlign: "center", padding: "16px 0 8px" }}>
-          <div style={{ fontSize: 48, marginBottom: 10 }}>{medal}</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "#F0F2F5", marginBottom: 4 }}>Nota média: {avg}/10</div>
-          <div style={{ fontSize: 13, color: msgColor, fontWeight: 700, marginBottom: 4 }}>{adaptMsg}</div>
-          <div style={{ fontSize: 12, color: "#444", marginBottom: 20 }}>Próximo nível: {nextDiff} · Tema: {caseResult.topic}</div>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20 }}>
-            {caseResult.scores.map(function(s, i) {
-              var c = s >= 7 ? "#06D6A0" : s >= 5 ? "#F77F00" : "#FF4D6D";
-              return <div key={i} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#444", marginBottom: 4 }}>Etapa {i+1}</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: c }}>{s}</div>
-              </div>;
-            })}
-          </div>
-          {caseFeedback && caseFeedback.resposta_ideal && <div style={{ textAlign: "left", padding: "12px 14px", background: "rgba(255,255,255,0.02)", borderRadius: 12, marginBottom: 18, border: "1px solid rgba(255,255,255,0.04)" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#444", marginBottom: 6 }}>RESPOSTA IDEAL — ETAPA FINAL</div>
-            <div style={{ fontSize: 13, color: "#8B99B0", lineHeight: 1.7 }}>{caseFeedback.resposta_ideal}</div>
-          </div>}
-          <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-            <button onClick={function() { setCaseData(null); setCaseFeedback(null); setUserAnswer(""); setCaseResult(null); generate(); }} style={{ padding: "10px 22px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>🔄 Novo caso</button>
-            <button onClick={onClose} style={{ padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555", fontWeight: 600, cursor: "pointer" }}>Fechar</button>
-          </div>
-        </div>
-      </>);
-  }
-
-  // Case
-  if (caseData) {
-    var caseDiffTopic = caseTopic || caseData.tema || "Geral";
-    return renderModal(<>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#F0F2F5", flex: 1 }}>{caseData.titulo}</div>
-          <DiffBadge topic={caseDiffTopic} topicLevels={topicLevels} />
-        </div>
-        <div style={{ fontSize: 13, color: "#8B99B0", lineHeight: 1.85, padding: "14px 16px", background: "rgba(255,255,255,0.02)", borderRadius: 12, marginBottom: 16, whiteSpace: "pre-wrap", borderLeft: "3px solid " + col + "40" }}>{caseData.historia}</div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>{[0,1,2].map(function(i) {
-          var stepScore = caseScores[i];
-          var sc = stepScore != null ? (stepScore >= 7 ? "#06D6A0" : stepScore >= 5 ? "#F77F00" : "#FF4D6D") : (i < caseStep ? "#06D6A0" : i === caseStep ? col : "rgba(255,255,255,0.06)");
-          return <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: sc }} />;
-        })}</div>
-        {caseStep < 3 && <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: col, marginBottom: 12, padding: "10px 14px", background: col + "0C", borderRadius: 10, borderLeft: "3px solid " + col }}>{caseData["pergunta_" + (caseStep + 1)]}</div>
-          {!caseFeedback && <div>
-            <textarea value={userAnswer} onChange={function(e) { setUserAnswer(e.target.value); }} placeholder="Sua resposta..." style={{ width: "100%", minHeight: 100, padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: "#D0D8E8", fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box" }} />
-            <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={submitCase} disabled={loading || !userAnswer.trim()} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: userAnswer.trim() ? col : "rgba(255,255,255,0.05)", color: userAnswer.trim() ? "#fff" : "#444", fontWeight: 700, cursor: userAnswer.trim() ? "pointer" : "not-allowed" }}>{loading ? "Avaliando..." : "Enviar →"}</button>
-            </div>
-          </div>}
-          {caseFeedback && <div>
-            <div style={{ padding: 16, borderRadius: 14, marginTop: 12, background: caseFeedback.avaliacao === "correta" ? "rgba(6,214,160,0.07)" : caseFeedback.avaliacao === "parcial" ? "rgba(247,127,0,0.07)" : "rgba(255,77,109,0.07)", border: "1px solid " + (caseFeedback.avaliacao === "correta" ? "rgba(6,214,160,0.15)" : caseFeedback.avaliacao === "parcial" ? "rgba(247,127,0,0.15)" : "rgba(255,77,109,0.15)") }}>
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 18 }}>{caseFeedback.avaliacao === "correta" ? "✅" : caseFeedback.avaliacao === "parcial" ? "🟡" : "❌"}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#D0D8E8" }}>Nota: {caseFeedback.nota}/10</span>
-              </div>
-              <div style={{ fontSize: 13, color: "#8B99B0", lineHeight: 1.7, marginBottom: caseFeedback.resposta_ideal ? 10 : 0 }}>{caseFeedback.feedback}</div>
-              {caseFeedback.resposta_ideal && <div style={{ fontSize: 12, color: "#555", lineHeight: 1.6, borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: 10, marginTop: 4 }}><span style={{ fontWeight: 700, color: "#444" }}>Resposta ideal: </span>{caseFeedback.resposta_ideal}</div>}
-            </div>
-            <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-              {caseStep < 2
-                ? <button onClick={function() { setCaseStep(caseStep + 1); setUserAnswer(""); setCaseFeedback(null); }} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Próxima etapa →</button>
-                : <button onClick={function() { setCaseStep(3); }} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "#06D6A0", color: "#0F1117", fontWeight: 700, cursor: "pointer" }}>Ver Resultado →</button>
-              }
-            </div>
-          </div>}
-        </div>}
-      </>);
-  }
-
-  return renderModal(<div style={{ color: "#555", textAlign: "center", padding: 24 }}>Carregando...</div>);
-}
-
-// ════════════════════════════════════════
-// MATERIAL PRACTICE COMPONENT
-// ════════════════════════════════════════
-function MaterialPractice({ material, mode, onClose }) {
-  var col = "#F77F00";
-  var [loading, setLoading] = useState(true);
-  var [questions, setQuestions] = useState(null);
-  var [qIndex, setQIndex] = useState(0);
-  var [selected, setSelected] = useState(null);
-  var [revealed, setRevealed] = useState(false);
-  var [score, setScore] = useState({ correct: 0, total: 0 });
-  var [error, setError] = useState(null);
-
-  var isFlash = mode === "flash";
-  var [cards, setCards] = useState(null);
-  var [cardIndex, setCardIndex] = useState(0);
-  var [flipped, setFlipped] = useState(false);
-  var [done, setDone] = useState(false);
-
-  useEffect(function() { generate(); }, []);
-
-  function generate() {
-    setLoading(true); setError(null); setQuestions(null); setCards(null);
-    setQIndex(0); setSelected(null); setRevealed(false); setScore({ correct: 0, total: 0 });
-    setCardIndex(0); setFlipped(false); setDone(false);
-
-    var excerpt = material.content.slice(0, 1500);
-    var prompt = isFlash
-      ? 'Crie 6 flashcards baseados neste texto:\n"' + excerpt + '"\nAPENAS JSON: {"flashcards":[{"frente":"pergunta","verso":"resposta"}]}'
-      : 'Crie 5 questões múltipla escolha para UPA baseadas neste texto. PROIBIDO "todas as anteriores". Terminologia médica correta. Explicação deve diferenciar alternativas.\nTexto:\n"' + excerpt + '"\nAPENAS JSON: {"questoes":[{"enunciado":"caso clínico","alternativas":["A)...","B)...","C)...","D)..."],"correta":0,"explicacao":"explicação completa"}]}';
-
-    fetchAI({ max_tokens: 1500, messages: [{ role: "user", content: prompt }] })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      var txt = d.content.map(function(x) { return x.text || ""; }).join("\n");
-      var parsed = extractJSON(txt);
-      if (isFlash) { setCards(parsed.flashcards); }
-      else { setQuestions(parsed.questoes); }
-      setLoading(false);
-    })
-    .catch(function() { setError("Erro ao gerar. Tente novamente."); setLoading(false); });
-  }
-
-  var modalStyle = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 };
-  var panelStyle = { background: "#0F1117", borderRadius: 24, maxWidth: 620, width: "100%", maxHeight: "88vh", overflow: "auto", border: "1px solid rgba(255,255,255,0.07)" };
-
-  function Header() {
-    return (
-      <div style={{ padding: "18px 22px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(135deg," + col + "10,transparent)", position: "sticky", top: 0, background: "#0F1117", zIndex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: col + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{isFlash ? "🃏" : "📝"}</div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#F0F2F5" }}>{isFlash ? "Flashcards" : "Questões"} do Material</div>
-            <div style={{ fontSize: 11, color: col, fontWeight: 600, opacity: 0.8, maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{material.title}</div>
-          </div>
-        </div>
-        <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#666", width: 30, height: 30, borderRadius: 9, cursor: "pointer", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-      </div>
-    );
-  }
-
-  if (loading) return <div style={modalStyle}><div style={panelStyle}><Header /><div style={{ padding: "48px 24px", textAlign: "center" }}><div style={{ width: 40, height: 40, border: "3px solid " + col + "30", borderTopColor: col, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 14px" }} /><div style={{ color: "#555", fontSize: 13, fontWeight: 600 }}>Analisando material...</div></div></div></div>;
-  if (error) return <div style={modalStyle}><div style={panelStyle}><Header /><div style={{ padding: 28, textAlign: "center" }}><div style={{ color: "#FF4D6D", marginBottom: 14, fontSize: 13 }}>{error}</div><button onClick={generate} style={{ padding: "9px 24px", borderRadius: 11, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Tentar novamente</button></div></div></div>;
-
-  // Flashcards
-  if (isFlash && cards) {
-    if (done) return <div style={modalStyle}><div style={panelStyle}><Header /><div style={{ padding: "28px 22px", textAlign: "center" }}><div style={{ fontSize: 40, marginBottom: 10 }}>🎯</div><div style={{ fontSize: 18, fontWeight: 700, color: "#F0F2F5", marginBottom: 6 }}>Revisão concluída!</div><div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}><button onClick={generate} style={{ padding: "10px 22px", borderRadius: 11, border: "none", background: col, color: "#fff", fontWeight: 700, cursor: "pointer" }}>🔄 Novos cards</button><button onClick={onClose} style={{ padding: "10px 22px", borderRadius: 11, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555", fontWeight: 600, cursor: "pointer" }}>Fechar</button></div></div></div></div>;
-    var card = cards[cardIndex];
-    return <div style={modalStyle}><div style={panelStyle}><Header />
-      <div style={{ padding: "18px 22px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ display: "flex", gap: 5 }}>{cards.map(function(_,i){ return <div key={i} style={{ width: i===cardIndex?16:5, height: 5, borderRadius: 3, background: i<cardIndex?"#06D6A0":i===cardIndex?col:"rgba(255,255,255,0.08)" }} />; })}</div>
-          <span style={{ fontSize: 11, color: "#444", fontWeight: 600 }}>{cardIndex+1}/{cards.length}</span>
-        </div>
-        <div onClick={function(){setFlipped(!flipped);}} style={{ cursor: "pointer", minHeight: 180, borderRadius: 16, border: "1px solid "+(flipped?col+"40":"rgba(255,255,255,0.07)"), background: flipped?col+"08":"rgba(255,255,255,0.02)", padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", transition: "all 0.3s" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: flipped?col:"#444", marginBottom: 14 }}>{flipped?"RESPOSTA":"PERGUNTA — clique para revelar"}</div>
-          <div style={{ fontSize: flipped?13:15, color: flipped?"#8B99B0":"#F0F2F5", lineHeight: 1.8, fontWeight: flipped?400:600 }}>{flipped?card.verso:card.frente}</div>
-        </div>
-        {flipped && <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button onClick={function(){ if(cardIndex<cards.length-1){setCardIndex(cardIndex+1);setFlipped(false);}else{setDone(true);}}} style={{ flex:1, padding:"11px", borderRadius:11, border:"none", background:"rgba(6,214,160,0.12)", color:"#06D6A0", fontWeight:700, cursor:"pointer", fontSize:13 }}>✅ Sabia</button>
-          <button onClick={function(){ if(cardIndex<cards.length-1){setCardIndex(cardIndex+1);setFlipped(false);}else{setDone(true);}}} style={{ flex:1, padding:"11px", borderRadius:11, border:"none", background:"rgba(255,77,109,0.12)", color:"#FF4D6D", fontWeight:700, cursor:"pointer", fontSize:13 }}>❌ Não sabia</button>
-        </div>}
-        {!flipped && <div style={{ marginTop: 12, textAlign: "center" }}><span style={{ fontSize: 12, color: "#333" }}>Toque no card para ver a resposta</span></div>}
-      </div>
-    </div></div>;
-  }
-
-  // Questions
-  if (questions && qIndex < questions.length) {
-    var q = questions[qIndex];
-    return <div style={modalStyle}><div style={panelStyle}><Header />
-      <div style={{ padding: "18px 22px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{ display: "flex", gap: 6 }}>{questions.map(function(_,i){ return <div key={i} style={{ width:i===qIndex?18:5, height:5, borderRadius:3, background:i<qIndex?"#06D6A0":i===qIndex?col:"rgba(255,255,255,0.08)" }} />; })}</div>
-          <span style={{ fontSize: 11, fontWeight: 700, padding:"2px 9px", borderRadius:20, background:"#06D6A018", color:"#06D6A0" }}>✓ {score.correct}/{score.total}</span>
-        </div>
-        <div style={{ fontSize: 13, color: "#D0D8E8", lineHeight: 1.8, padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 12, marginBottom: 14, borderLeft: "3px solid " + col + "40" }}>{q.enunciado}</div>
-        <div style={{ display: "grid", gap: 7 }}>
-          {q.alternativas.map(function(alt, idx) {
-            var isCorrect = idx === q.correta, isSelected = idx === selected;
-            var bg = "rgba(255,255,255,0.02)", bc = "rgba(255,255,255,0.06)", tc = "#8B99B0";
-            if (revealed && isCorrect) { bg = "rgba(6,214,160,0.1)"; bc = "#06D6A0"; tc = "#06D6A0"; }
-            else if (revealed && isSelected) { bg = "rgba(255,77,109,0.1)"; bc = "#FF4D6D"; tc = "#FF4D6D"; }
-            return <div key={idx} onClick={function(){ if(revealed)return; setSelected(idx); setRevealed(true); var ok=idx===q.correta; setScore(function(s){ return {correct:s.correct+(ok?1:0),total:s.total+1}; }); }} style={{ padding:"11px 14px", borderRadius:11, cursor:revealed?"default":"pointer", background:bg, border:"1px solid "+bc, display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ width:26, height:26, borderRadius:7, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, background:revealed&&isCorrect?"#06D6A0":revealed&&isSelected?"#FF4D6D":"rgba(255,255,255,0.05)", color:revealed&&(isCorrect||isSelected)?"#0F1117":"#555" }}>{revealed?(isCorrect?"✓":isSelected?"✗":String.fromCharCode(65+idx)):String.fromCharCode(65+idx)}</div>
-              <span style={{ fontSize:13, color:tc, lineHeight:1.5 }}>{alt.replace(/^[A-D]\)\s*/,"")}</span>
-            </div>;
-          })}
-        </div>
-        {revealed && <div style={{ marginTop:12, padding:14, borderRadius:12, background:selected===q.correta?"rgba(6,214,160,0.06)":"rgba(255,77,109,0.06)", border:"1px solid "+(selected===q.correta?"rgba(6,214,160,0.15)":"rgba(255,77,109,0.15)") }}>
-          <div style={{ fontSize:12, fontWeight:700, color:selected===q.correta?"#06D6A0":"#FF4D6D", marginBottom:6 }}>{selected===q.correta?"✅ Correto!":"❌ Incorreto"}</div>
-          <div style={{ fontSize:13, color:"#8B99B0", lineHeight:1.7 }}>{q.explicacao}</div>
-        </div>}
-        {revealed && <div style={{ marginTop:12, display:"flex", justifyContent:"flex-end" }}>
-          {qIndex < questions.length-1
-            ? <button onClick={function(){ setQIndex(qIndex+1); setSelected(null); setRevealed(false); }} style={{ padding:"9px 22px", borderRadius:11, border:"none", background:col, color:"#fff", fontWeight:700, cursor:"pointer" }}>Próxima →</button>
-            : <button onClick={function(){ setQIndex(questions.length); }} style={{ padding:"9px 22px", borderRadius:11, border:"none", background:"#06D6A0", color:"#0F1117", fontWeight:700, cursor:"pointer" }}>Ver Resultado</button>
-          }
-        </div>}
-      </div>
-    </div></div>;
-  }
-
-  if (questions && qIndex >= questions.length) {
-    var pct = score.total > 0 ? Math.round((score.correct/score.total)*100) : 0;
-    return <div style={modalStyle}><div style={panelStyle}><Header />
-      <div style={{ padding:"28px 22px", textAlign:"center" }}>
-        <div style={{ fontSize:44, marginBottom:10 }}>{pct>=80?"🎉":pct>=50?"💪":"📚"}</div>
-        <div style={{ fontSize:26, fontWeight:800, color:"#F0F2F5" }}>{score.correct}<span style={{ color:"#444" }}>/{score.total}</span></div>
-        <div style={{ fontSize:13, color:pct>=80?"#06D6A0":pct>=50?"#F77F00":"#FF4D6D", fontWeight:700, marginTop:4 }}>{pct}% de acerto</div>
-        <div style={{ display:"flex", gap:10, justifyContent:"center", marginTop:22 }}>
-          <button onClick={generate} style={{ padding:"9px 22px", borderRadius:11, border:"none", background:col, color:"#fff", fontWeight:700, cursor:"pointer" }}>🔄 Novas questões</button>
-          <button onClick={onClose} style={{ padding:"9px 22px", borderRadius:11, border:"1px solid rgba(255,255,255,0.08)", background:"transparent", color:"#555", fontWeight:600, cursor:"pointer" }}>Fechar</button>
-        </div>
-      </div>
-    </div></div>;
-  }
-
-  return null;
+function TabTips({ guideKey }) {
+  var g = GUIDES[guideKey];
+  if (!g) return null;
+  return <div style={{ marginTop: 28, padding: "16px 18px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+    <div style={{ fontSize: 12, fontWeight: 700, color: "#555", marginBottom: 10, letterSpacing: "0.03em" }}>💡 DICAS</div>
+    <div style={{ display: "grid", gap: 6 }}>
+      {g.tips.map(function(tip, i) {
+        return <div key={i} style={{ fontSize: 12, color: "#666", lineHeight: 1.7, paddingLeft: 12, borderLeft: "2px solid rgba(255,255,255,0.05)" }}>{tip}</div>;
+      })}
+    </div>
+  </div>;
 }
 
 // ════════════════════════════════════════
@@ -1573,18 +1302,10 @@ export default function App() {
   var [fcFlipped, setFcFlipped] = useState(false);
   var [fcTotal, setFcTotal] = useState(function() { return loadFlashcards().length; });
   var [guideKey, setGuideKey] = useState(null);
-  var [practiceMode, setPracticeMode] = useState(null);
   var [lessonModule, setLessonModule] = useState(null);
+  var [expandedTopic, setExpandedTopic] = useState(null);
   var [showFlashcards, setShowFlashcards] = useState(false);
-  var [materials, setMaterials] = useState(function() {
-    try { return JSON.parse(localStorage.getItem(MATERIALS_KEY) || "[]"); } catch(e) { return []; }
-  });
-  var [materialsSynced, setMaterialsSynced] = useState(false);
-  var [matTitle, setMatTitle] = useState("");
-  var [matContent, setMatContent] = useState("");
-  var [matPractice, setMatPractice] = useState(null); // { material, mode }
   var [timerBlock, setTimerBlock] = useState(null); // { dur, label, color }
-  var [dragOver, setDragOver] = useState(false);
   var ZOOM_KEY = "medico-pratica-zoom";
   var [zoom, setZoom] = useState(function() {
     try { return parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.15; } catch(e) { return 1.15; }
@@ -1595,65 +1316,6 @@ export default function App() {
       try { localStorage.setItem(ZOOM_KEY, nz); } catch(e) {}
       return nz;
     });
-  }
-
-  // Sync materiais: carrega do servidor, fallback localStorage
-  useEffect(function() {
-    fetch((window.location.hostname === "localhost" ? "http://localhost:3001" : "") + "/api/materials")
-      .then(function(r) { return r.json(); })
-      .then(function(serverMats) {
-        // Merge: servidor é fonte principal, localStorage é cache
-        var localMats = [];
-        try { localMats = JSON.parse(localStorage.getItem(MATERIALS_KEY) || "[]"); } catch(e) {}
-        // Combina: materiais do servidor + locais que não existem no servidor
-        var serverIds = serverMats.map(function(m) { return String(m.id); });
-        var onlyLocal = localMats.filter(function(m) { return !serverIds.includes(String(m.id)); });
-        // Salva materiais só-locais no servidor
-        onlyLocal.forEach(function(m) {
-          fetch((window.location.hostname === "localhost" ? "http://localhost:3001" : "") + "/api/materials", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(m)
-          }).catch(function() {});
-        });
-        var merged = serverMats.concat(onlyLocal);
-        setMaterials(merged);
-        try { localStorage.setItem(MATERIALS_KEY, JSON.stringify(merged)); } catch(e) {}
-        setMaterialsSynced(true);
-      })
-      .catch(function() { setMaterialsSynced(true); }); // offline: usa localStorage
-  }, []);
-
-  function saveMaterials(list) {
-    setMaterials(list);
-    // Protege: não sobrescreve com lista vazia se já tem dados
-    if (!list.length) {
-      var existing = null;
-      try { existing = localStorage.getItem(MATERIALS_KEY); } catch(e) {}
-      if (existing && existing !== "[]" && existing !== "null") return;
-    }
-    try { localStorage.setItem(MATERIALS_KEY, JSON.stringify(list)); } catch(e) {}
-  }
-  function addMaterial() {
-    if (!matTitle.trim() || !matContent.trim()) return;
-    var m = { id: Date.now(), title: matTitle.trim(), content: matContent.trim(), date: new Date().toLocaleDateString("pt-BR") };
-    saveMaterials([m].concat(materials));
-    // Salva no servidor
-    fetch((window.location.hostname === "localhost" ? "http://localhost:3001" : "") + "/api/materials", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(m)
-    }).catch(function() {});
-    setMatTitle(""); setMatContent("");
-  }
-  function deleteMaterial(id) {
-    saveMaterials(materials.filter(function(m){ return m.id !== id; }));
-    // Remove do servidor
-    fetch("http://localhost:3001/api/materials/" + id, { method: "DELETE" }).catch(function() {});
-  }
-  function handleFileUpload(file) {
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e) { setMatContent(e.target.result); if (!matTitle) setMatTitle(file.name.replace(/\.[^.]+$/, "")); };
-    reader.readAsText(file);
   }
 
   var [userName, setUserName] = useState(function() {
@@ -1696,14 +1358,6 @@ export default function App() {
   var totalDone = MODULES.reduce(function(s, m) { return s + getWatched(m.id).length; }, 0);
   var totalPct = Math.round((totalDone / TOTAL_LESSONS) * 100);
   var sched = makeSchedule(cw);
-
-  // Encontra o último módulo com aulas marcadas (para questões)
-  var lastActiveMod = (function() {
-    for (var i = MODULES.length - 1; i >= 0; i--) {
-      if (getWatched(MODULES[i].id).length > 0) return MODULES[i];
-    }
-    return MODULES[0];
-  })();
   var totalBlocks = sched.days.reduce(function(s, d) { return s + d.blocks.length; }, 0);
   var doneBlocks = Object.keys(ct).filter(function(k) { return k.startsWith("w" + cw + "-"); }).length;
   var weekProg = doneBlocks / totalBlocks;
@@ -1712,9 +1366,8 @@ export default function App() {
     { key: "week",     label: "Semana",   icon: "📅" },
     { key: "modules",  label: "Módulos",  icon: "📋" },
     { key: "claude",   label: "Atividades", icon: "🩺" },
-    { key: "errors",   label: "Revisão",  icon: "🔄" },
+    { key: "errors",   label: "Estatísticas", icon: "📊" },
     { key: "flashcards", label: "Flashcards", icon: "🃏" },
-    { key: "material", label: "Material", icon: "📁" },
     { key: "roadmap",  label: "Trilha",   icon: "🗺️" },
     { key: "guide",    label: "Guia",     icon: "❓" },
   ];
@@ -1734,10 +1387,8 @@ export default function App() {
       {timerBlock && <PomodoroTimer dur={timerBlock.dur} label={timerBlock.label} color={timerBlock.color} onClose={function() { setTimerBlock(null); }} />}
 
       {/* Flashcards Modal */}
-      {showFlashcards && <Flashcards errorBank={errorBank} watchedState={ws} materials={materials} onClose={function() { setShowFlashcards(false); }} />}
+      {showFlashcards && <Flashcards errorBank={errorBank} watchedState={ws} onClose={function() { setShowFlashcards(false); }} />}
 
-      {/* Material Practice Modal */}
-      {matPractice && <MaterialPractice material={matPractice.material} mode={matPractice.mode} onClose={function(){ setMatPractice(null); }} />}
 
       {/* Name Modal */}
       {showNameModal && (
@@ -1786,14 +1437,12 @@ export default function App() {
         </div>
       </div>}
 
-      {/* Practice Modal */}
-      {practiceMode && <Practice mod={lastActiveMod} mode={practiceMode} onClose={function() { setPracticeMode(null); }} topicLevels={topicLevels} dispatch={dispatch} errorBank={errorBank} watchedState={ws} materials={materials} />}
 
       {/* Header */}
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0 24px", background: "rgba(10,12,16,0.9)", backdropFilter: "blur(20px)", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ maxWidth: 860, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#4CC9F0,#7B2FBE)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>👨‍⚕️</div>
+            <img src="/icon.svg" alt="icon" style={{ width: 44, height: 44, borderRadius: 12 }} />
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#F0F2F5", lineHeight: 1, fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Pronto Atendimento Suckel</div>
               {userName && <div style={{ fontSize: 11, color: "#555", marginTop: 2, fontWeight: 500 }}>Olá, {userName} 👋</div>}
@@ -1860,87 +1509,129 @@ export default function App() {
           })()}
           <div style={{ display: "grid", gap: 3 }}>
             {(lessonModule.topics || []).map(function(topic) {
-              // Encontra todos os índices de aulas deste tema
               var indices = [];
               lessonModule.lessons.forEach(function(l, i) {
                 if (lessonMatchesTopic(l, topic)) indices.push(i);
               });
               var allDone = indices.length > 0 && indices.every(function(i) { return getWatched(lessonModule.id).includes(i); });
               var someDone = indices.some(function(i) { return getWatched(lessonModule.id).includes(i); });
-              return <div key={topic} onClick={function() {
-                // Toggle: marca ou desmarca todas as aulas desse tema
-                indices.forEach(function(i) {
-                  var isWatched = getWatched(lessonModule.id).includes(i);
-                  if (allDone) {
-                    if (isWatched) dispatch({ type: "TOGGLE_LESSON", modId: lessonModule.id, idx: i });
-                  } else {
-                    if (!isWatched) dispatch({ type: "TOGGLE_LESSON", modId: lessonModule.id, idx: i });
-                  }
-                });
-              }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.015)", borderLeft: "2px solid " + (allDone ? "#06D6A0" : someDone ? lessonModule.color : "rgba(255,255,255,0.05)"), cursor: "pointer", opacity: allDone ? 0.5 : 1, transition: "all 0.2s" }}>
-                <div style={{ width: 18, height: 18, borderRadius: 5, border: "2px solid " + (allDone ? "#06D6A0" : someDone ? lessonModule.color : "rgba(255,255,255,0.1)"), background: allDone ? "#06D6A0" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#0A0C10", flexShrink: 0, fontWeight: 700 }}>{allDone ? "✓" : ""}</div>
-                <span style={{ fontSize: 13, fontWeight: 500, color: allDone ? "#444" : "#D0D8E8", textDecoration: allDone ? "line-through" : "none" }}>{topic}</span>
-                <span style={{ fontSize: 10, color: "#444", marginLeft: "auto" }}>{indices.filter(function(i) { return getWatched(lessonModule.id).includes(i); }).length}/{indices.length}</span>
+              var resumo = getResumoForLesson(topic) || (indices.length > 0 ? getResumoForLesson(lessonModule.lessons[indices[0]]) : null);
+              var isExpanded = expandedTopic === topic;
+              return <div key={topic}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: isExpanded ? "10px 10px 0 0" : 10, background: "rgba(255,255,255,0.015)", borderLeft: "2px solid " + (allDone ? "#06D6A0" : someDone ? lessonModule.color : "rgba(255,255,255,0.05)"), opacity: allDone ? 0.5 : 1, transition: "all 0.2s" }}>
+                  <div onClick={function(e) {
+                    e.stopPropagation();
+                    indices.forEach(function(i) {
+                      var isWatched = getWatched(lessonModule.id).includes(i);
+                      if (allDone) {
+                        if (isWatched) dispatch({ type: "TOGGLE_LESSON", modId: lessonModule.id, idx: i });
+                      } else {
+                        if (!isWatched) dispatch({ type: "TOGGLE_LESSON", modId: lessonModule.id, idx: i });
+                      }
+                    });
+                  }} style={{ width: 18, height: 18, borderRadius: 5, border: "2px solid " + (allDone ? "#06D6A0" : someDone ? lessonModule.color : "rgba(255,255,255,0.1)"), background: allDone ? "#06D6A0" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#0A0C10", flexShrink: 0, fontWeight: 700, cursor: "pointer" }}>{allDone ? "✓" : ""}</div>
+                  <div onClick={function() { if (resumo) setExpandedTopic(isExpanded ? null : topic); }} style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, cursor: resumo ? "pointer" : "default" }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: allDone ? "#444" : "#D0D8E8", textDecoration: allDone ? "line-through" : "none" }}>{topic}</span>
+                    {resumo && <span style={{ fontSize: 10, color: isExpanded ? lessonModule.color : "#333", transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>}
+                  </div>
+                  <span style={{ fontSize: 10, color: "#444" }}>{indices.filter(function(i) { return getWatched(lessonModule.id).includes(i); }).length}/{indices.length}</span>
+                </div>
+                {isExpanded && resumo && <div style={{ padding: "16px 18px", background: "rgba(255,255,255,0.02)", borderLeft: "2px solid " + lessonModule.color + "40", borderRadius: "0 0 10px 10px", marginBottom: 2 }}>
+                  <div style={{ fontSize: 12, color: "#8B99B0", lineHeight: 1.9, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{resumo}</div>
+                </div>}
               </div>;
             })}
           </div>
         </div>}
 
-        {/* ─── ERRORS / REVISÃO TAB ─── */}
+        {/* ─── ESTATÍSTICAS TAB ─── */}
         {!lessonModule && view === "errors" && (function() {
-          var errTopics = Object.keys(errorBank).filter(function(t) { return errorBank[t] > 0; }).sort(function(a,b) { return (errorBank[b]||0) - (errorBank[a]||0); });
-          var totalErrors = errTopics.reduce(function(s, t) { return s + errorBank[t]; }, 0);
+          var stats = loadStats();
+
+          // Agrupa acertos e erros por tema (todas as sessões)
+          var topicStats = {};
+          stats.forEach(function(sess) {
+            (sess.temas || []).forEach(function(t) {
+              if (!topicStats[t]) topicStats[t] = { acertos: 0, erros: 0 };
+              topicStats[t].acertos += (sess.temaAcertos && sess.temaAcertos[t]) || 0;
+              topicStats[t].erros += (sess.temaErros && sess.temaErros[t]) || 0;
+            });
+          });
+
+          // Ordena: mais questões respondidas primeiro
+          var topicList = Object.keys(topicStats).sort(function(a, b) {
+            var totalA = topicStats[a].acertos + topicStats[a].erros;
+            var totalB = topicStats[b].acertos + topicStats[b].erros;
+            return totalB - totalA;
+          });
+
+          var grandAcertos = topicList.reduce(function(s, t) { return s + topicStats[t].acertos; }, 0);
+          var grandErros = topicList.reduce(function(s, t) { return s + topicStats[t].erros; }, 0);
+          var grandTotal = grandAcertos + grandErros;
+          var grandPct = grandTotal > 0 ? Math.round((grandAcertos / grandTotal) * 100) : 0;
+
           return <div style={{ animation: "fadeIn 0.2s ease" }}>
             <div style={{ marginBottom: 24 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Revisão de Erros</h2>
-              <p style={{ fontSize: 13, color: "#444", margin: 0 }}>Revise os temas que você mais errou durante a semana</p>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Estatísticas</h2>
+              <p style={{ fontSize: 13, color: "#444", margin: 0 }}>Acertos e erros por tema</p>
             </div>
 
-            {errTopics.length === 0 && <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#F0F2F5", marginBottom: 6 }}>Nenhum erro registrado!</div>
-              <div style={{ fontSize: 13, color: "#444" }}>Pratique questões e seus erros aparecerão aqui para revisão.</div>
+            {/* Resumo geral */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+              <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(6,214,160,0.06)", border: "1px solid rgba(6,214,160,0.12)" }}>
+                <div style={{ fontSize: 10, color: "#06D6A0", fontWeight: 700, marginBottom: 4 }}>ACERTOS</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#06D6A0" }}>{grandAcertos}</div>
+              </div>
+              <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(255,77,109,0.06)", border: "1px solid rgba(255,77,109,0.12)" }}>
+                <div style={{ fontSize: 10, color: "#FF4D6D", fontWeight: 700, marginBottom: 4 }}>ERROS</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#FF4D6D" }}>{grandErros}</div>
+              </div>
+              <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(76,201,240,0.06)", border: "1px solid rgba(76,201,240,0.12)" }}>
+                <div style={{ fontSize: 10, color: "#4CC9F0", fontWeight: 700, marginBottom: 4 }}>% ACERTO</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: grandPct >= 70 ? "#06D6A0" : grandPct >= 50 ? "#FFD60A" : "#FF4D6D" }}>{grandPct}%</div>
+              </div>
+            </div>
+
+            {/* Por tema */}
+            {topicList.length > 0 && <div style={{ display: "grid", gap: 8 }}>
+              {topicList.map(function(topic) {
+                var s = topicStats[topic];
+                var total = s.acertos + s.erros;
+                var pct = total > 0 ? Math.round((s.acertos / total) * 100) : 0;
+                var color = pct >= 70 ? "#06D6A0" : pct >= 50 ? "#FFD60A" : "#FF4D6D";
+                return <div key={topic} style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#F0F2F5" }}>{topic}</span>
+                      <DiffBadge topic={topic} topicLevels={topicLevels} />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: color }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.04)", marginBottom: 6 }}>
+                    <div style={{ height: "100%", borderRadius: 3, background: color, width: pct + "%", transition: "width 0.3s" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                    <span style={{ color: "#06D6A0" }}>✓ {s.acertos} acertos</span>
+                    <span style={{ color: "#FF4D6D" }}>✗ {s.erros} erros</span>
+                    <span style={{ color: "#555" }}>{total} questões</span>
+                  </div>
+                </div>;
+              })}
             </div>}
 
-            {errTopics.length > 0 && <>
-              <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(255,77,109,0.06)", border: "1px solid rgba(255,77,109,0.12)" }}>
-                  <div style={{ fontSize: 11, color: "#FF4D6D", fontWeight: 700, marginBottom: 4 }}>TEMAS COM ERRO</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "#F0F2F5" }}>{errTopics.length}</div>
-                </div>
-                <div style={{ flex: 1, padding: "14px 16px", borderRadius: 14, background: "rgba(247,127,0,0.06)", border: "1px solid rgba(247,127,0,0.12)" }}>
-                  <div style={{ fontSize: 11, color: "#F77F00", fontWeight: 700, marginBottom: 4 }}>TOTAL DE ERROS</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "#F0F2F5" }}>{totalErrors}</div>
-                </div>
-              </div>
+            {/* Sem dados */}
+            {topicList.length === 0 && <div style={{ textAlign: "center", padding: "48px 0" }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#F0F2F5", marginBottom: 6 }}>Nenhum dado ainda</div>
+              <div style={{ fontSize: 13, color: "#444" }}>Importe seu primeiro relatório na aba Atividades para ver suas estatísticas.</div>
+            </div>}
 
-              <div style={{ display: "grid", gap: 8 }}>
-                {errTopics.map(function(topic) {
-                  var count = errorBank[topic];
-                  var tl = getTopicLevel(topicLevels, topic);
-                  var nivel = tl.nivel;
-                  var dc = DIFF_COLORS[nivel] || DIFF_COLORS[0];
-                  var barWidth = Math.min(100, (count / Math.max.apply(null, errTopics.map(function(t){ return errorBank[t]; }))) * 100);
-                  return <div key={topic} style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "#F0F2F5" }}>{topic}</span>
-                        <DiffBadge topic={topic} topicLevels={topicLevels} />
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#FF4D6D" }}>{count} {count === 1 ? "erro" : "erros"}</span>
-                    </div>
-                    <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.04)" }}>
-                      <div style={{ height: "100%", borderRadius: 2, background: "#FF4D6D", width: barWidth + "%", transition: "width 0.3s" }} />
-                    </div>
-                  </div>;
-                })}
-              </div>
+            {/* Limpar */}
+            {topicList.length > 0 && <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+              <button onClick={function() { try { localStorage.setItem(STATS_KEY, "[]"); } catch(e) {} dispatch({ type: "SET_ERROR_BANK", value: {} }); setView("errors"); }} style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#444", fontWeight: 600, cursor: "pointer", fontSize: 11 }}>Limpar estatísticas</button>
+            </div>}
 
-              <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-                <button onClick={function() { setPracticeMode("questions"); }} style={{ flex: 1, padding: "12px 20px", borderRadius: 12, border: "none", background: "#FF4D6D", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Praticar temas com erro</button>
-                <button onClick={function() { dispatch({ type: "SET_ERROR_BANK", value: {} }); }} style={{ padding: "12px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>Limpar erros</button>
-              </div>
-            </>}
+            <TabTips guideKey="levels" />
           </div>;
         })()}
 
@@ -1951,16 +1642,13 @@ export default function App() {
           var card = dueCards[fcIndex];
           var nextReviewCards = allCards.filter(function(c) { return c.nextReview > new Date().toISOString().slice(0, 10); });
 
-          function handleReview(remembered) {
+          function handleReview(quality) {
             if (!card) return;
-            reviewCard(card.id, remembered);
+            reviewCard(card.id, quality);
             setFcFlipped(false);
-            if (fcIndex < dueCards.length - 1) {
-              setFcIndex(fcIndex + 1);
-            } else {
-              setFcCards(getCardsForReview());
-              setFcIndex(0);
-            }
+            var updated = getCardsForReview();
+            setFcCards(updated);
+            if (fcIndex >= updated.length) setFcIndex(0);
             setFcTotal(loadFlashcards().length);
           }
 
@@ -1998,7 +1686,7 @@ export default function App() {
             {!allCards.length && <div style={{ textAlign: "center", padding: "48px 0" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🃏</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#F0F2F5", marginBottom: 6 }}>Nenhum flashcard ainda</div>
-              <div style={{ fontSize: 13, color: "#444" }}>Pratique na aba Claude e importe o relatório — os flashcards dos seus erros aparecerão aqui automaticamente.</div>
+              <div style={{ fontSize: 13, color: "#444" }}>Pratique na aba Atividades e importe o relatório — os flashcards dos seus erros aparecerão aqui automaticamente.</div>
             </div>}
 
             {/* All reviewed */}
@@ -2014,26 +1702,49 @@ export default function App() {
                 <span>Card {fcIndex + 1} de {dueCards.length}</span>
                 {card.tema && <span style={{ color: "#4CC9F0" }}>{card.tema}</span>}
               </div>
-              <div onClick={function() { setFcFlipped(!fcFlipped); }} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 20, padding: "32px 24px", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", minHeight: 160, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", transition: "all 0.2s" }}>
-                {!fcFlipped && <>
-                  <div style={{ fontSize: 11, color: "#555", fontWeight: 700, marginBottom: 12, letterSpacing: "0.05em" }}>PERGUNTA</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: "#F0F2F5", lineHeight: 1.7 }}>{card.frente}</div>
-                  <div style={{ fontSize: 11, color: "#333", marginTop: 16 }}>Clique para ver a resposta</div>
-                </>}
-                {fcFlipped && <>
+              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 20, padding: "32px 24px", border: "1px solid rgba(255,255,255,0.06)", minHeight: 160, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", transition: "all 0.2s" }}>
+                <div style={{ fontSize: 11, color: "#555", fontWeight: 700, marginBottom: 12, letterSpacing: "0.05em" }}>PERGUNTA</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#F0F2F5", lineHeight: 1.7 }}>{card.frente}</div>
+                {fcFlipped && <div style={{ width: "100%", marginTop: 20 }}>
+                  <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: 16 }} />
                   <div style={{ fontSize: 11, color: "#06D6A0", fontWeight: 700, marginBottom: 12, letterSpacing: "0.05em" }}>RESPOSTA</div>
                   <div style={{ fontSize: 15, color: "#8B99B0", lineHeight: 1.7 }}>{card.verso}</div>
-                </>}
+                </div>}
               </div>
-              {fcFlipped && <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                <button onClick={function() { handleReview(false); }} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "none", background: "rgba(255,77,109,0.12)", color: "#FF4D6D", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>Não lembrei</button>
-                <button onClick={function() { handleReview(true); }} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "none", background: "rgba(6,214,160,0.12)", color: "#06D6A0", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>Lembrei</button>
+              {!fcFlipped && <div style={{ marginTop: 16, textAlign: "center" }}>
+                <button onClick={function(e) { e.stopPropagation(); setFcFlipped(true); }} style={{ padding: "12px 32px", borderRadius: 14, border: "1px solid rgba(76,201,240,0.3)", background: "rgba(76,201,240,0.08)", color: "#4CC9F0", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>🔄 Virar card</button>
               </div>}
-              {fcFlipped && <div style={{ fontSize: 11, color: "#333", marginTop: 8, textAlign: "center" }}>
-                {"Próxima revisão: " + (card.interval === 0 ? "amanhã" : "em " + SPACED_INTERVALS[Math.min(card.interval + 1, SPACED_INTERVALS.length - 1)] + " dias se lembrar")}
-                {" · Revisões: " + card.reviews}
+              {fcFlipped && <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 11, color: "#444", textAlign: "center", marginBottom: 8 }}>Quão bem você lembrou?</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                  <button onClick={function() { handleReview(0); }} style={{ padding: "12px 4px", borderRadius: 12, border: "1px solid rgba(255,77,109,0.25)", background: "rgba(255,77,109,0.08)", color: "#FF4D6D", fontWeight: 700, cursor: "pointer", fontSize: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, marginBottom: 4 }}>{getNextIntervalPreview(card, 0)}</div>
+                    <div>De novo</div>
+                  </button>
+                  <button onClick={function() { handleReview(1); }} style={{ padding: "12px 4px", borderRadius: 12, border: "1px solid rgba(247,127,0,0.25)", background: "rgba(247,127,0,0.08)", color: "#F77F00", fontWeight: 700, cursor: "pointer", fontSize: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, marginBottom: 4 }}>{getNextIntervalPreview(card, 1)}</div>
+                    <div>Difícil</div>
+                  </button>
+                  <button onClick={function() { handleReview(2); }} style={{ padding: "12px 4px", borderRadius: 12, border: "1px solid rgba(76,201,240,0.25)", background: "rgba(76,201,240,0.08)", color: "#4CC9F0", fontWeight: 700, cursor: "pointer", fontSize: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, marginBottom: 4 }}>{getNextIntervalPreview(card, 2)}</div>
+                    <div>Bom</div>
+                  </button>
+                  <button onClick={function() { handleReview(3); }} style={{ padding: "12px 4px", borderRadius: 12, border: "1px solid rgba(6,214,160,0.25)", background: "rgba(6,214,160,0.08)", color: "#06D6A0", fontWeight: 700, cursor: "pointer", fontSize: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 11, marginBottom: 4 }}>{getNextIntervalPreview(card, 3)}</div>
+                    <div>Fácil</div>
+                  </button>
+                </div>
+                <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6 }}>
+                    <span style={{ color: "#FF4D6D" }}>De novo</span> — Não lembrei nada, quero ver de novo agora · <span style={{ color: "#F77F00" }}>Difícil</span> — Lembrei com muito esforço · <span style={{ color: "#4CC9F0" }}>Bom</span> — Lembrei após pensar um pouco · <span style={{ color: "#06D6A0" }}>Fácil</span> — Lembrei instantaneamente
+                  </div>
+                </div>
+                <div style={{ fontSize: 10, color: "#333", marginTop: 6, textAlign: "center" }}>
+                  {"Revisões: " + card.reviews + " · Facilidade: " + ((card.ease || 2.5) * 100).toFixed(0) + "%" + (card.streak ? " · Sequência: " + card.streak : "") + (card.lapses ? " · Lapsos: " + card.lapses : "")}
+                </div>
               </div>}
             </div>}
+            <TabTips guideKey="flashcards" />
           </div>;
         })()}
 
@@ -2072,28 +1783,66 @@ export default function App() {
               return m.name + ":\n" + topicLines;
             }).filter(Boolean).join("\n\n") || "Nenhum tema marcado ainda";
             var watchedTxt = watchedTopics.join(", ") || "nenhum";
-            var matTxt = materials.length ? materials.map(function(m) { return m.title + ":\n" + m.content; }).join("\n---\n") : "nenhum";
-            return { errTopics: errTopics, levels: levels, modProgress: modProgress, errTxt: errTxt, levelTxt: levelTxt, matTxt: matTxt, watchedTopics: watchedTopics, watchedTxt: watchedTxt };
+            var resumosTxt = buildWatchedResumos(ws, watchedTopics).slice(0, 5).join("\n---\n").slice(0, 8000) || "nenhum";
+            return { errTopics: errTopics, levels: levels, modProgress: modProgress, errTxt: errTxt, levelTxt: levelTxt, resumosTxt: resumosTxt, watchedTopics: watchedTopics, watchedTxt: watchedTxt };
           }
 
           var allTopicNames = [];
           MODULES.forEach(function(m) { (m.topics || []).forEach(function(t) { if (!allTopicNames.includes(t)) allTopicNames.push(t); }); });
           var syncFormat = '\n\n--- INSTRUCOES INTERNAS (nao mostrar ao aluno) ---\n' +
-            'REGISTRO: Mantenha internamente um registro de acertos e erros por tema ao longo da conversa. Voce vai precisar disso para gerar o sync no final.\n' +
-            'NAO gere o bloco medico-sync durante a conversa. Gere APENAS quando o aluno digitar "finalizei".\n\n' +
+            'Mantenha um registro interno de acertos e erros por tema durante a conversa.\n' +
+            'NAO gere o bloco de relatorio durante a conversa. Gere APENAS quando o aluno digitar "finalizei".\n\n' +
             '--- QUANDO O ALUNO DIGITAR "finalizei" ---\n' +
-            'Gere OBRIGATORIAMENTE um bloco de sync neste formato EXATO:\n```medico-sync\n{"acao":"atualizar","dados":{"niveis":{"NomeTema":{"nivel":0,"pontos":0}},"erros":{"NomeTema":0},"flashcards":[{"frente":"pergunta","verso":"resposta"}],"observacoes":"resumo do desempenho"}}\n```\n\n' +
-            'SISTEMA DE PROGRESSAO (use para calcular niveis e pontos no sync):\n' +
-            'Cada tema tem um NIVEL (0-5) e PONTOS acumulados dentro desse nivel.\n' +
-            'Niveis: 0=Muito Facil, 1=Facil, 2=Moderado, 3=Dificil, 4=Muito Dificil, 5=Impossivel.\n' +
-            'Pontos para subir: nivel 0=2pts, nivel 1=3pts, nivel 2=3pts, nivel 3=4pts, nivel 4=5pts, nivel 5=1pt.\n' +
-            'ACERTO em um tema: +1 ponto. Se pontos atingem o necessario, SOBE nivel e pontos voltam a 0.\n' +
-            'ERRO em um tema: VOLTA nivel anterior e pontos voltam a 0. No nivel 0 apenas zera pontos.\n' +
-            'Exemplo: tema nivel 1 (Facil, precisa 3pts) com 2 pontos. Acertou = 3pts = sobe nivel 2 (Moderado) com 0pts. Se errou = volta nivel 0 (Muito Facil) com 0pts.\n' +
-            'IMPORTANTE: Os niveis informados acima sao EXCLUSIVOS desta atividade. Cada atividade (Questoes, Caso Clinico, Investigacao, Reforco) tem niveis separados por tema. Atualize apenas os niveis desta atividade.\n' +
-            'Parta dos niveis e pontos ATUAIS informados acima e aplique os acertos/erros da sessao para chegar ao valor FINAL.\n\n' +
-            'FLASHCARDS: No campo "flashcards" do sync, gere 1 flashcard para CADA tema que o aluno ERROU na sessao. Formato: {"frente":"pergunta objetiva","verso":"resposta completa"}. Foque no ponto exato que o aluno errou.\n\n' +
-            'NOMES DOS TEMAS: Use EXATAMENTE os nomes abaixo (com acentos, espacos e maiusculas). Nomes diferentes NAO serao reconhecidos pelo app:\n' + allTopicNames.join(", ");
+            'Gere o relatorio EXATAMENTE neste formato, dentro de um bloco de codigo com a tag medico-sync:\n\n' +
+            '```medico-sync\n' +
+            '{\n' +
+            '  "acao": "atualizar",\n' +
+            '  "dados": {\n' +
+            '    "niveis": {\n' +
+            '      "NomeTema": { "nivel": 0, "pontos": 0 }\n' +
+            '    },\n' +
+            '    "erros": {\n' +
+            '      "NomeTema": 0\n' +
+            '    },\n' +
+            '    "flashcards": [\n' +
+            '      { "frente": "pergunta", "verso": "resposta" }\n' +
+            '    ],\n' +
+            '    "observacoes": "resumo"\n' +
+            '  }\n' +
+            '}\n' +
+            '```\n\n' +
+            'EXEMPLO PREENCHIDO (supondo que o aluno acertou PCR e errou Sepse, partindo de PCR nivel 2 com 1pt e Sepse nivel 1 com 2pts):\n\n' +
+            '```medico-sync\n' +
+            '{\n' +
+            '  "acao": "atualizar",\n' +
+            '  "dados": {\n' +
+            '    "niveis": {\n' +
+            '      "PCR": { "nivel": 2, "pontos": 2 },\n' +
+            '      "Sepse": { "nivel": 0, "pontos": 2 }\n' +
+            '    },\n' +
+            '    "erros": {\n' +
+            '      "Sepse": 1\n' +
+            '    },\n' +
+            '    "flashcards": [\n' +
+            '      { "frente": "Qual antibiotico iniciar na sepse de foco pulmonar?", "verso": "Ceftriaxona 2g IV + Azitromicina 500mg IV (ou Levofloxacino 750mg IV se alergia)" }\n' +
+            '    ],\n' +
+            '    "observacoes": "Bom desempenho em PCR. Revisar antibioticoterapia na sepse."\n' +
+            '  }\n' +
+            '}\n' +
+            '```\n\n' +
+            'REGRAS DO RELATORIO:\n' +
+            '1. O JSON DEVE estar dentro do bloco ```medico-sync ... ```. OBRIGATORIO.\n' +
+            '2. Use EXATAMENTE os nomes dos temas listados abaixo. Nomes diferentes nao serao reconhecidos.\n' +
+            '3. Inclua APENAS temas que apareceram na sessao.\n' +
+            '4. Gere 1 flashcard para cada tema que o aluno ERROU (foque no ponto exato do erro).\n' +
+            '5. O campo "erros" conta apenas os erros DESTA sessao (nao acumula).\n\n' +
+            'PROGRESSAO DE NIVEIS:\n' +
+            '- Niveis: 0=Muito Facil, 1=Facil, 2=Moderado, 3=Dificil, 4=Muito Dificil, 5=Impossivel\n' +
+            '- Pontos para subir de nivel: 0→2pts, 1→3pts, 2→3pts, 3→4pts, 4→5pts, 5→1pt\n' +
+            '- ACERTO: +1 ponto. Se pontos atingem o necessario, sobe nivel e pontos voltam a 0.\n' +
+            '- ERRO: volta nivel anterior COM pontos cheios (ex: se cai pro nivel 2 que precisa 3pts, fica com 3pts — so precisa 1 acerto pra subir de novo). No nivel 0 zera pontos.\n' +
+            '- Parta dos niveis/pontos ATUAIS informados acima e aplique acertos/erros para chegar ao valor FINAL.\n\n' +
+            'NOMES VALIDOS DOS TEMAS (use EXATAMENTE estes):\n' + allTopicNames.join(", ");
 
           var activities = [
             { id: "questions", icon: "📝", title: "Questões", color: "#4CC9F0", desc: "Múltipla escolha · dificuldade ajusta ao seu nível", gen: function() {
@@ -2113,8 +1862,8 @@ export default function App() {
                 "--- MEUS NÍVEIS ---",
                 sd.levelTxt,
                 "",
-                "--- MEUS MATERIAIS ---",
-                sd.matTxt,
+                "--- RESUMOS DAS AULAS ESTUDADAS ---",
+                sd.resumosTxt,
                 "",
                 "--- FORMATO DA QUESTÃO ---",
                 "Questão N [Nível]",
@@ -2134,7 +1883,7 @@ export default function App() {
                 "5. Enunciado coerente com a resposta correta",
                 "6. Varie: diagnóstico, conduta, fisiopatologia, farmacologia",
                 "7. PROIBIDO: 'todas as anteriores', 'nenhuma das anteriores'",
-                "8. Use meus materiais como base quando o tema coincidir",
+                "8. Use os resumos das aulas estudadas como base quando o tema coincidir",
                 "",
                 "--- APÓS EU RESPONDER ---",
                 "1. Revele o TEMA",
@@ -2161,8 +1910,8 @@ export default function App() {
                 "--- MEUS NÍVEIS ---",
                 sd.levelTxt,
                 "",
-                "--- MEUS MATERIAIS ---",
-                sd.matTxt,
+                "--- RESUMOS DAS AULAS ESTUDADAS ---",
+                sd.resumosTxt,
                 "",
                 "--- REGRAS ---",
                 "1. Escolha o tema ALEATORIAMENTE da lista acima",
@@ -2196,8 +1945,8 @@ export default function App() {
                 "--- MEUS NÍVEIS ---",
                 sd.levelTxt,
                 "",
-                "--- MEUS MATERIAIS ---",
-                sd.matTxt,
+                "--- RESUMOS DAS AULAS ESTUDADAS ---",
+                sd.resumosTxt,
                 "",
                 "--- APRESENTAÇÃO INICIAL ---",
                 "Dê APENAS: queixa principal, idade, sexo, como chegou na UPA.",
@@ -2224,8 +1973,36 @@ export default function App() {
 
           return <div style={{ animation: "fadeIn 0.2s ease" }}>
             <div style={{ marginBottom: 24 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Estudar com Claude</h2>
-              <p style={{ fontSize: 13, color: "#444", margin: 0 }}>Escolha uma atividade, copie o prompt e cole no Claude</p>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Atividades com IA</h2>
+              <p style={{ fontSize: 13, color: "#444", margin: 0 }}>Escolha uma atividade, copie o prompt e cole em uma IA</p>
+            </div>
+
+            {/* Tutorial */}
+            <div style={{ marginBottom: 20, padding: "16px 18px", borderRadius: 14, background: "rgba(76,201,240,0.04)", border: "1px solid rgba(76,201,240,0.10)" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#4CC9F0", marginBottom: 10 }}>Como funciona</div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {[
+                  { n: "1", text: "Marque os temas já estudados na aba Módulos" },
+                  { n: "2", text: "Escolha uma atividade abaixo e clique na seta →" },
+                  { n: "3", text: "Clique em 'Copiar prompt' e cole em uma IA" },
+                  { n: "4", text: "Pratique com a IA — ele faz questões no seu nível" },
+                  { n: "5", text: "Ao terminar, digite 'finalizei' para a IA" },
+                  { n: "6", text: "A IA vai gerar uma mensagem de código. Clique no botão Copiar que aparece abaixo da mensagem:", icon: true },
+                  { n: "7", text: "Cole na caixa 'Importar relatório' abaixo e clique em Importar" },
+                  { n: "8", text: "Após importar, vá para a aba Flashcards e revise os cards gerados dos seus erros" },
+                ].map(function(step) {
+                  return <div key={step.n}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 22, height: 22, borderRadius: 7, background: "rgba(76,201,240,0.12)", color: "#4CC9F0", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{step.n}</div>
+                      <span style={{ fontSize: 12, color: "#8B99B0", lineHeight: 1.5 }}>{step.text}</span>
+                    </div>
+                    {step.icon && <div style={{ marginTop: 8, marginLeft: 32, marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B99B0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                      <span style={{ fontSize: 12, color: "#8B99B0", fontWeight: 600 }}>Copiar</span>
+                    </div>}
+                  </div>;
+                })}
+              </div>
             </div>
 
             {/* Atividades */}
@@ -2256,13 +2033,13 @@ export default function App() {
             {/* Prompt gerado */}
             {claudeExport && <div style={{ marginBottom: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#4CC9F0" }}>Prompt gerado — copie e cole no Claude</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#4CC9F0" }}>Prompt gerado — copie e cole em uma IA</div>
                 <button onClick={function() { setClaudeExport(""); setClaudeActivity(null); setClaudeMsg(""); }} style={{ padding: "4px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#555", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>← Voltar</button>
               </div>
               <textarea readOnly value={claudeExport} style={{ width: "100%", minHeight: 180, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#8B99B0", padding: 14, fontSize: 11, fontFamily: "'IBM Plex Mono', monospace", resize: "vertical" }} onClick={function(e) { e.target.select(); }} />
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <button onClick={function() { navigator.clipboard.writeText(claudeExport); setClaudeMsg("Copiado!"); }} style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "#06D6A0", color: "#0F1117", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Copiar prompt</button>
-                {claudeMsg === "Copiado!" && <span style={{ display: "flex", alignItems: "center", fontSize: 12, color: "#06D6A0" }}>Copiado! Cole no Claude e comece.</span>}
+                {claudeMsg === "Copiado!" && <span style={{ display: "flex", alignItems: "center", fontSize: 12, color: "#06D6A0" }}>Copiado! Copiado! Cole em uma IA e comece.</span>}
               </div>
             </div>}
 
@@ -2319,21 +2096,72 @@ export default function App() {
 
             {/* Importar */}
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#E040FB", marginBottom: 10 }}>Importar relatório do Claude</div>
-              <p style={{ fontSize: 12, color: "#555", marginBottom: 10 }}>Quando terminar, digite "finalizei" no Claude. Cole a resposta inteira aqui — o app encontra o bloco automaticamente.</p>
-              <textarea value={claudeImport} onChange={function(e) { setClaudeImport(e.target.value); setClaudeMsg(""); }} placeholder={"Cole aqui a resposta inteira do Claude..."} style={{ width: "100%", minHeight: 100, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#D0D8E8", padding: 14, fontSize: 12, fontFamily: "'IBM Plex Mono', monospace", resize: "vertical" }} />
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#E040FB", marginBottom: 10 }}>Importar relatório</div>
+              <p style={{ fontSize: 12, color: "#555", marginBottom: 10 }}>Quando terminar, digite "finalizei" na IA. Cole a resposta inteira aqui — o app encontra o bloco automaticamente.</p>
+              <textarea value={claudeImport} onChange={function(e) { setClaudeImport(e.target.value); setClaudeMsg(""); }} placeholder={"Cole aqui a resposta inteira da IA..."} style={{ width: "100%", minHeight: 100, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, color: "#D0D8E8", padding: 14, fontSize: 12, fontFamily: "'IBM Plex Mono', monospace", resize: "vertical" }} />
               <button onClick={function() {
                 try {
-                  var raw = claudeImport;
-                  var syncMatch = raw.match(/```medico-sync\s*([\s\S]*?)```/);
+                  // Limpa aspas curvas, caracteres especiais e whitespace unicode
+                  var raw = claudeImport
+                    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+                    .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
+                    .replace(/\u00A0/g, " ");
+                  // 1. Tenta bloco ```medico-sync ... ```
+                  var syncMatch = raw.match(/```medico-sync\s*([\s\S]*?)```/) || raw.match(/```medico\s*([\s\S]*?)```/);
+                  // 2. Tenta bloco ```json ... ``` que contenha "acao"
                   if (!syncMatch) {
-                    // Tenta achar JSON solto
-                    var jsonMatch = raw.match(/\{"acao"\s*:\s*"atualizar"[\s\S]*?\}\s*\}/);
+                    var jsonBlock = raw.match(/```json\s*([\s\S]*?)```/);
+                    if (jsonBlock && jsonBlock[1].indexOf('"acao"') >= 0) syncMatch = jsonBlock;
+                  }
+                  // 3. Tenta qualquer bloco ``` ... ``` que contenha "acao"
+                  if (!syncMatch) {
+                    var anyBlock = raw.match(/```\s*([\s\S]*?)```/);
+                    if (anyBlock && anyBlock[1].indexOf('"acao"') >= 0) syncMatch = anyBlock;
+                  }
+                  // 4. Tenta JSON após palavra "medico" sem bloco de código
+                  if (!syncMatch) {
+                    var medicoMatch = raw.match(/medico[\s\-_]*sync?\s*\n?\s*(\{[\s\S]*\})/i);
+                    if (medicoMatch) syncMatch = [null, medicoMatch[1]];
+                  }
+                  // 5. Tenta achar JSON solto com "acao":"atualizar"
+                  if (!syncMatch) {
+                    var jsonMatch = raw.match(/\{\s*"acao"\s*:\s*"atualizar"[\s\S]*\}/);
                     if (jsonMatch) syncMatch = [null, jsonMatch[0]];
                   }
-                  if (!syncMatch) throw new Error("Bloco medico-sync nao encontrado na resposta. Certifique-se de digitar 'finalizei' no Claude.");
+                  // 6. Tenta achar JSON solto com "dados" e "niveis"
+                  if (!syncMatch) {
+                    var dataMatch = raw.match(/\{\s*"dados"\s*:\s*\{[\s\S]*"niveis"[\s\S]*\}/);
+                    if (dataMatch) syncMatch = [null, dataMatch[0]];
+                  }
+                  // 7. Tenta achar qualquer JSON grande com "niveis"
+                  if (!syncMatch) {
+                    var niveisMatch = raw.match(/\{[\s\S]*"niveis"\s*:\s*\{[\s\S]*\}\s*\}/);
+                    if (niveisMatch) syncMatch = [null, niveisMatch[0]];
+                  }
+                  if (!syncMatch) throw new Error("Relatório não encontrado. Certifique-se de digitar 'finalizei' na IA e copiar a resposta completa.");
                   var jsonStr = syncMatch[1].trim();
-                  var data = JSON.parse(jsonStr);
+                  var data;
+                  try { data = JSON.parse(jsonStr); } catch(parseErr) {
+                    // Tenta limpar o JSON progressivamente
+                    var cleaned = jsonStr;
+                    // Remove aspas simples dentro de valores de string
+                    cleaned = cleaned.replace(/"([^"]*)"/g, function(m) { return m.replace(/'/g, ""); });
+                    try { data = JSON.parse(cleaned); } catch(e2) {
+                      // Tenta extrair só a parte JSON válida
+                      var braceCount = 0; var start = -1; var end = -1;
+                      for (var ci = 0; ci < cleaned.length; ci++) {
+                        if (cleaned[ci] === "{") { if (start < 0) start = ci; braceCount++; }
+                        if (cleaned[ci] === "}") { braceCount--; if (braceCount === 0 && start >= 0) { end = ci + 1; break; } }
+                      }
+                      if (start >= 0 && end > start) {
+                        try { data = JSON.parse(cleaned.slice(start, end)); } catch(e3) {
+                          throw new Error("JSON invalido. Tente copiar a resposta da IA novamente.");
+                        }
+                      } else {
+                        throw new Error("JSON invalido. Tente copiar a resposta da IA novamente.");
+                      }
+                    }
+                  }
                   var d = data.dados || data;
                   var changes = [];
 
@@ -2389,6 +2217,37 @@ export default function App() {
                     changes.push(added + " flashcards adicionados para revisao");
                   }
 
+                  // Salva sessão nas estatísticas
+                  var sessionData = {
+                    date: new Date().toISOString(),
+                    activity: importActivity,
+                    temaErros: {},
+                    temaAcertos: {},
+                    temas: []
+                  };
+                  if (d.niveis) {
+                    Object.keys(d.niveis).forEach(function(t) {
+                      if (validTopics.includes(t)) {
+                        sessionData.temas.push(t);
+                        sessionData.temaAcertos[t] = (sessionData.temaAcertos[t] || 0);
+                      }
+                    });
+                  }
+                  if (d.erros) {
+                    Object.keys(d.erros).forEach(function(t) {
+                      if (validTopics.includes(t)) {
+                        sessionData.temaErros[t] = d.erros[t];
+                        if (!sessionData.temas.includes(t)) sessionData.temas.push(t);
+                      }
+                    });
+                  }
+                  // Estima acertos por tema: se apareceu e não errou, acertou
+                  sessionData.temas.forEach(function(t) {
+                    var erros = sessionData.temaErros[t] || 0;
+                    sessionData.temaAcertos[t] = erros > 0 ? 0 : 1;
+                  });
+                  saveSession(sessionData);
+
                   var msg = "Importado com sucesso!\n" + changes.join("\n");
                   if (ignored.length) msg += "\n\nTemas ignorados (nao reconhecidos): " + ignored.join(", ");
                   if (d.observacoes) msg += "\n\n" + d.observacoes;
@@ -2405,7 +2264,8 @@ export default function App() {
 
         {/* ─── GUIDE TAB ─── */}
         {!lessonModule && view === "guide" && <div style={{ animation: "fadeIn 0.2s ease" }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 20px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Como Estudar</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Tutorial</h2>
+          <p style={{ fontSize: 13, color: "#444", margin: "0 0 20px" }}>Aprenda a usar o app e tire o máximo do seu estudo</p>
           <div style={{ display: "grid", gap: 8 }}>
             {Object.keys(GUIDES).map(function(k) {
               var g = GUIDES[k];
@@ -2427,7 +2287,7 @@ export default function App() {
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={function() {
                 var data = {};
-                [STORAGE_KEY, NAME_KEY, MATERIALS_KEY, FLASHCARDS_KEY, FEEDBACK_KEY].forEach(function(k) {
+                [STORAGE_KEY, NAME_KEY, FLASHCARDS_KEY, FEEDBACK_KEY].forEach(function(k) {
                   try { var v = localStorage.getItem(k); if (v) data[k] = v; } catch(e) {}
                 });
                 var json = JSON.stringify(data);
@@ -2467,68 +2327,6 @@ export default function App() {
           </div>
         </div>}
 
-        {/* ─── MATERIAL TAB ─── */}
-        {!lessonModule && view === "material" && <div style={{ animation: "fadeIn 0.2s ease" }}>
-          <div style={{ marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "#F0F2F5", fontFamily: "'Newsreader', serif", fontStyle: "italic" }}>Meu Material</h2>
-            <p style={{ fontSize: 13, color: "#444", margin: 0 }}>Envie resumos, anotações ou textos e gere questões e flashcards com IA</p>
-          </div>
-
-          {/* Upload area */}
-          <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 18, border: "1px solid rgba(255,255,255,0.06)", padding: "20px", marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#F0F2F5", marginBottom: 12 }}>Adicionar material</div>
-            <input
-              value={matTitle}
-              onChange={function(e){ setMatTitle(e.target.value); }}
-              placeholder="Título (ex: Resumo IAM, Anotações Sepse...)"
-              style={{ width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#F0F2F5", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 10 }}
-            />
-            <textarea
-              value={matContent}
-              onChange={function(e){ setMatContent(e.target.value); }}
-              placeholder="Cole seu texto aqui... (resumo, anotações, transcrição de aula, etc.)"
-              style={{ width: "100%", minHeight: 120, padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#F0F2F5", fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box", marginBottom: 10 }}
-            />
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <label
-                onDragOver={function(e){ e.preventDefault(); setDragOver(true); }}
-                onDragLeave={function(){ setDragOver(false); }}
-                onDrop={function(e){ e.preventDefault(); setDragOver(false); handleFileUpload(e.dataTransfer.files[0]); }}
-                style={{ flex: 1, padding: "9px 14px", borderRadius: 10, border: "1px dashed " + (dragOver ? "#4CC9F0" : "rgba(255,255,255,0.1)"), background: dragOver ? "rgba(76,201,240,0.06)" : "transparent", color: "#555", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}
-              >
-                📄 Clique ou arraste um arquivo .txt
-                <input type="file" accept=".txt,.md" style={{ display: "none" }} onChange={function(e){ handleFileUpload(e.target.files[0]); }} />
-              </label>
-              <button
-                onClick={addMaterial}
-                disabled={!matTitle.trim() || !matContent.trim()}
-                style={{ padding: "9px 22px", borderRadius: 10, border: "none", background: matTitle.trim() && matContent.trim() ? "#4CC9F0" : "rgba(255,255,255,0.05)", color: matTitle.trim() && matContent.trim() ? "#0F1117" : "#444", fontWeight: 700, cursor: matTitle.trim() && matContent.trim() ? "pointer" : "not-allowed", fontSize: 13, whiteSpace: "nowrap" }}
-              >+ Salvar</button>
-            </div>
-          </div>
-
-          {/* Material list */}
-          {materials.length === 0 && <div style={{ textAlign: "center", padding: "32px 0", color: "#333", fontSize: 13 }}>Nenhum material salvo ainda</div>}
-          <div style={{ display: "grid", gap: 10 }}>
-            {materials.map(function(m) {
-              return <div key={m.id} style={{ background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid rgba(247,127,0,0.12)", padding: "16px 18px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#F0F2F5", marginBottom: 3 }}>{m.title}</div>
-                    <div style={{ fontSize: 11, color: "#444" }}>{m.date} · {m.content.length} caracteres</div>
-                  </div>
-                  <button onClick={function(){ deleteMaterial(m.id); }} style={{ background: "rgba(255,77,109,0.08)", border: "1px solid rgba(255,77,109,0.15)", color: "#FF4D6D", width: 28, height: 28, borderRadius: 8, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 10 }}>✕</button>
-                </div>
-                <div style={{ fontSize: 12, color: "#555", marginBottom: 14, lineHeight: 1.6, maxHeight: 48, overflow: "hidden" }}>{m.content.slice(0, 140)}...</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={function(){ setMatPractice({ material: m, mode: "questions" }); }} style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "none", background: "rgba(247,127,0,0.12)", color: "#F77F00", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>📝 Gerar Questões</button>
-                  <button onClick={function(){ setMatPractice({ material: m, mode: "flash" }); }} style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "none", background: "rgba(76,201,240,0.1)", color: "#4CC9F0", fontWeight: 700, cursor: "pointer", fontSize: 12 }}>🃏 Flashcards</button>
-                </div>
-              </div>;
-            })}
-          </div>
-        </div>}
-
         {/* ─── MODULES TAB ─── */}
         {!lessonModule && view === "modules" && <div style={{ animation: "fadeIn 0.2s ease" }}>
           <div style={{ marginBottom: 20 }}>
@@ -2563,6 +2361,7 @@ export default function App() {
               });
             })()}
           </div>
+          <TabTips guideKey="modules" />
         </div>}
 
         {/* ─── ROADMAP TAB ─── */}
@@ -2750,6 +2549,7 @@ export default function App() {
               </div>;
             })}
           </div>
+          <TabTips guideKey="schedule" />
         </div>}
 
       </div>

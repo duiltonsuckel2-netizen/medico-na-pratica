@@ -1,12 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, readdirSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const MATERIALS_DIR = join(__dirname, "materiais");
 
 // ══ PROVEDORES DE IA (fallback automático) ══
 const providers = [];
@@ -155,49 +149,6 @@ app.get("/api/tokens", (req, res) => {
     ...(tokenStatus[p.name] || { remaining: null, limit: null, status: "não usado ainda" }),
   }));
   res.json(status);
-});
-
-// ══ MATERIAIS (disco) ══
-if (!existsSync(MATERIALS_DIR)) mkdirSync(MATERIALS_DIR);
-
-app.get("/api/materials", (req, res) => {
-  try {
-    const files = readdirSync(MATERIALS_DIR).filter(f => f.endsWith(".json"));
-    const materials = files.map(f => {
-      try { return JSON.parse(readFileSync(join(MATERIALS_DIR, f), "utf-8")); }
-      catch(e) { return null; }
-    }).filter(Boolean);
-    res.json(materials);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post("/api/materials", (req, res) => {
-  try {
-    const mat = req.body;
-    if (!mat.id || !mat.title || !mat.content) {
-      return res.status(400).json({ error: "Material precisa de id, title e content" });
-    }
-    const safeName = String(mat.id).replace(/[^a-zA-Z0-9_-]/g, "") + ".json";
-    writeFileSync(join(MATERIALS_DIR, safeName), JSON.stringify(mat, null, 2), "utf-8");
-    console.log("Material salvo:", mat.title);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete("/api/materials/:id", (req, res) => {
-  try {
-    const safeName = String(req.params.id).replace(/[^a-zA-Z0-9_-]/g, "") + ".json";
-    const filePath = join(MATERIALS_DIR, safeName);
-    if (existsSync(filePath)) unlinkSync(filePath);
-    console.log("Material removido:", req.params.id);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
 const PORT = 3001;
